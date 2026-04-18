@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { quizSocket } from "@/back/WebSocket";
-import { useWebSocket } from "@/app/providers/WebSocketProvider";
+import {useState} from "react";
+import {useRouter} from "next/navigation";
+import {useWebSocket} from "@/app/providers/WebSocketProvider";
+import {useQuiz} from "@/app/hooks/useQuiz";
 
 export default function CreatePage() {
     const [duration, setDuration] = useState(10);
     const [isCreating, setIsCreating] = useState(false);
+
     const router = useRouter();
-    const { isConnected } = useWebSocket();
+
+    const {isConnected} = useWebSocket();
+    const {createRoom} = useQuiz(); // important
 
     const handleCreate = async () => {
         if (duration <= 0) return;
@@ -17,9 +20,12 @@ export default function CreatePage() {
         setIsCreating(true);
 
         try {
-            await quizSocket.connect();
+            const roomId = await createRoom(duration);
 
-            const roomId = await quizSocket.createRoom();
+            if (!roomId) {
+                console.warn("Room ID does not exist!");
+                return;
+            }
 
             router.push(`/lobby/${encodeURIComponent(roomId)}`);
         } catch (err) {
@@ -28,6 +34,7 @@ export default function CreatePage() {
             setIsCreating(false);
         }
     };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-900 text-white">
             <div className="flex flex-col gap-6 w-80">
@@ -39,7 +46,6 @@ export default function CreatePage() {
                 <label htmlFor="time">Durée (min)</label>
                 <input
                     id="time"
-                    name="time"
                     type="number"
                     value={duration}
                     onChange={(e) => setDuration(Number(e.target.value))}
@@ -49,20 +55,22 @@ export default function CreatePage() {
 
                 <button
                     onClick={handleCreate}
-                    disabled={duration <= 0 || isCreating}
+                    disabled={duration <= 0 || isCreating || !isConnected}
                     className="cursor-pointer w-full bg-blue-500 hover:bg-blue-600 p-3 rounded-lg disabled:opacity-50"
                 >
-                    {isCreating ? "Creation..." : "Creer"}
+                    {isCreating ? "Création..." : "Créer"}
                 </button>
-
             </div>
 
+            {/* status */}
             <div className="fixed bottom-4 right-4">
-    <div
-        className={`w-4 h-4 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
-        title={isConnected ? "WebSocket connecté" : "WebSocket déconnecté"}
-    />
-</div>
+                <div
+                    className={`w-4 h-4 rounded-full ${
+                        isConnected ? "bg-green-500" : "bg-red-500"
+                    }`}
+                    title={isConnected ? "WebSocket connecté" : "WebSocket déconnecté"}
+                />
+            </div>
         </div>
-    )
+    );
 }

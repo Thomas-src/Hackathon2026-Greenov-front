@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { quizSocket } from "@/back/WebSocket";
 import { useWebSocket } from "@/app/providers/WebSocketProvider";
+import { useQuiz } from "@/app/hooks/useQuiz";
+import { BACKEND_URL } from "@/utils/constants";
 
 const random = (min: number, max: number) =>
     Math.random() * (max - min) + min;
 
-type Profile = "house" | "flat" | "company";
-
-const houseByProfile: Record<Profile, string> = {
-    house: "/houses/house.gif",
-    flat: "/houses/flat.gif",
-    company: "/houses/company.gif",
+type Profile = {
+    id: string;
+    label: string;
+    image: string;
 };
 
 type Player = {
@@ -30,7 +29,7 @@ function House({ src, x, y, isMe }: any) {
 
     return (
         <img
-            alt={`Maison`}
+            alt="Maison"
             src={src}
             className={`absolute ${isMe ? "w-20 z-20" : "w-16"}`}
             style={{
@@ -72,24 +71,58 @@ function generatePositions(count: number, size: number) {
 
 export default function JoinPage() {
     const searchParams = useSearchParams();
-    const sessionIdFromUrl = searchParams.get("game");
+    const roomIdFromUrl = searchParams.get("game");
 
-    const [sessionId, setSessionId] = useState(sessionIdFromUrl || "");
+    const [roomId, setRoomId] = useState(roomIdFromUrl || "");
     const [name, setName] = useState("");
-    const [profile, setProfile] = useState<Profile>("house");
+    const [profileId, setProfileId] = useState<string>("");
+
     const [joined, setJoined] = useState(false);
     const [isJoining, setIsJoining] = useState(false);
+
     const [players, setPlayers] = useState<Player[]>([]);
+    const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
+
     const { connect, isConnected } = useWebSocket();
+    const { joinRoom } = useQuiz(roomId);
+
+    // ─────────────────────────────
+    // FETCH PROFILES
+    // ─────────────────────────────
+
+    useEffect(() => {
+        const fetchProfiles = async () => {
+            try {
+                console.log("Fetching profiles with backend: " + `${BACKEND_URL}/api/profiles`);
+                const res = await fetch(`${BACKEND_URL}/api/profiles`);
+                if (!res.ok) throw new Error("API error");
+
+                const json = await res.json();
+                setAllProfiles(json);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchProfiles();
+    }, []);
+
+    // ─────────────────────────────
+    // JOIN
+    // ─────────────────────────────
 
     const handleJoin = async () => {
-        if (!name || !sessionId) return;
+        if (!name || !roomId || !profileId) return;
 
         setIsJoining(true);
 
         try {
             await connect();
-            await quizSocket.joinRoom(sessionId, name);
+
+            const profile = allProfiles.find((p) => p.id === profileId);
+            if (!profile) throw new Error("Profile not found");
+
+            await joinRoom(name, profile.id);
 
             const size = 320;
             const positions = generatePositions(players.length + 1, size);
@@ -118,6 +151,10 @@ export default function JoinPage() {
         }
     };
 
+    // ─────────────────────────────
+    // UI
+    // ─────────────────────────────
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-900 text-white">
             <div className="flex flex-col items-center gap-6 w-80">
@@ -126,10 +163,10 @@ export default function JoinPage() {
                     <>
                         <h1 className="text-2xl font-bold">Rejoindre la partie</h1>
 
-                        {!sessionIdFromUrl && (
+                        {!roomIdFromUrl && (
                             <input
-                                value={sessionId}
-                                onChange={(e) => setSessionId(e.target.value)}
+                                value={roomId}
+                                onChange={(e) => setRoomId(e.target.value)}
                                 placeholder="ID session"
                                 className="w-full p-3 rounded-lg"
                             />
@@ -139,22 +176,25 @@ export default function JoinPage() {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Pseudo"
-                            className="w-full p-3 rounded-lg "
+                            className="w-full p-3 rounded-lg"
                         />
 
                         <select
-                            value={profile}
-                            onChange={(e) => setProfile(e.target.value as Profile)}
-                            className="w-full p-3 rounded-lg "
+                            value={profileId}
+                            onChange={(e) => setProfileId(e.target.value)}
+                            className="w-full p-3 rounded-lg"
                         >
-                            <option value="house" className="text-black">Maison</option>
-                            <option value="flat">Appartement</option>
-                            <option value="company">Entreprise</option>
+                            <option value="">Choisir un profil</option>
+                            {allProfiles.map((p) => (
+                                <option key={p.id} value={p.id} className="text-black">
+                                    {p.label}
+                                </option>
+                            ))}
                         </select>
 
                         <button
                             onClick={handleJoin}
-                            disabled={!name || !sessionId || isJoining}
+                            disabled={!name || !roomId || !profileId || isJoining}
                             className="w-full bg-blue-500 p-3 rounded-lg"
                         >
                             {isJoining ? "Connexion..." : "Rejoindre"}
@@ -168,7 +208,7 @@ export default function JoinPage() {
                             {players.map((p) => (
                                 <House
                                     key={p.id}
-                                    src={houseByProfile[p.profile]}
+                                    src={`/houses/${p.profile.image}`}
                                     x={p.x}
                                     y={p.y}
                                     isMe={p.isMe}
@@ -177,12 +217,14 @@ export default function JoinPage() {
                         </div>
                     </>
                 )}
-
             </div>
 
-            {/* status */}
             <div className="fixed bottom-4 right-4">
-                <div className={`w-4 h-4 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
+                <div
+                    className={`w-4 h-4 rounded-full ${
+                        isConnected ? "bg-green-500" : "bg-red-500"
+                    }`}
+                />
             </div>
         </div>
     );

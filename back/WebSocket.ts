@@ -1,65 +1,128 @@
 import * as signalR from "@microsoft/signalr";
+import { BACKEND_URL } from "@/utils/constants";
 
 class QuizSocket {
 	private connection: signalR.HubConnection | null = null;
 
+	// ─────────────────────────────
+	// CONNECTION
+	// ─────────────────────────────
+
 	async connect() {
-		if (this.connection?.state === signalR.HubConnectionState.Connected) {
-			return;
-		}
+		if (this.isConnected()) return;
 
 		this.connection = new signalR.HubConnectionBuilder()
-			.withUrl("http://localhost:5275/hub")
+			.withUrl(`${BACKEND_URL}/hub`)
 			.withAutomaticReconnect()
 			.build();
 
-		this.connection.on("PlayerJoined", (username) => {
-			console.log("Player joined:", username);
-		});
-
-		this.connection.on("NewQuestion", (question) => {
-			console.log("Question:", question);
-		});
-
-		this.connection.on("ActionFeedback", (data) => {
-			console.log("Feedback:", data);
-		});
-
-		this.connection.on("VillageUpdate", (data) => {
-			console.log("Village:", data);
-		});
+		this.registerHandlers();
 
 		await this.connection.start();
 	}
 
-	async createRoom(): Promise<string> {
-		if (!this.connection) throw new Error("Not connected");
-
-		return await this.connection.invoke("CreateRoom");
+	isConnected() {
+		return this.connection?.state === signalR.HubConnectionState.Connected;
 	}
 
-	async joinRoom(roomId: string, username: string) {
-		return await this.connection?.invoke("JoinRoom", roomId, username);
+	private ensureConnection() {
+		if (!this.connection || !this.isConnected()) {
+			throw new Error("SignalR not connected");
+		}
+		return this.connection;
 	}
 
-	async sendQuestion(roomId: string, question: string) {
-		return await this.connection?.invoke("SendQuestion", roomId, question);
+	// ─────────────────────────────
+	// EVENTS REGISTRATION
+	// ─────────────────────────────
+
+	private registerHandlers() {
+		if (!this.connection) return;
+
+		this.connection.on("PlayerJoined", (data) => {
+			console.log("PlayerJoined", data);
+		});
+
+		this.connection.on("GameStarted", (data) => {
+			console.log("GameStarted", data);
+		});
+
+		this.connection.on("NewEvent", (data) => {
+			console.log("NewEvent", data);
+		});
+
+		this.connection.on("WaitingForOthers", (data) => {
+			console.log("WaitingForOthers", data);
+		});
+
+		this.connection.on("TimerTick", (data) => {
+			console.log("TimerTick", data);
+		});
+
+		this.connection.on("ActionFeedback", (data) => {
+			console.log("ActionFeedback", data);
+		});
+
+		this.connection.on("VillageUpdate", (data) => {
+			console.log("VillageUpdate", data);
+		});
+
+		this.connection.on("Debrief", (data) => {
+			console.log("Debrief", data);
+		});
+
+		this.connection.on("GlobalDebrief", (data) => {
+			console.log("GlobalDebrief", data);
+		});
 	}
 
-	async sendEvent(roomId: string, eventId: string) {
-		return await this.connection?.invoke("SendEvent", roomId, eventId);
+	// ─────────────────────────────
+	// ROOM (HOST / PLAYER)
+	// ─────────────────────────────
+
+	async createRoom(duration: number): Promise<string> {
+		return await this.ensureConnection().invoke("CreateRoom", duration);
 	}
+
+	async joinRoom(roomId: string, username: string, profile: string) {
+		await this.ensureConnection().invoke("JoinRoom", roomId, username, profile);
+	}
+
+	async startGame(roomId: string) {
+		await this.ensureConnection().invoke("StartGame", roomId);
+	}
+
+	async forceEnd(roomId: string) {
+		await this.ensureConnection().invoke("ForceEndGame", roomId);
+	}
+
+	// ─────────────────────────────
+	// GAME ACTIONS
+	// ─────────────────────────────
 
 	async submitAction(roomId: string, actionId: string) {
-		return await this.connection?.invoke("SubmitAction", roomId, actionId);
+		await this.ensureConnection().invoke("SubmitAction", roomId, actionId);
 	}
 
 	async getDebrief(roomId: string) {
-		return await this.connection?.invoke("GetMyDebrief", roomId);
+		await this.ensureConnection().invoke("GetMyDebrief", roomId);
 	}
 
-	isConnected() {
-		return this.connection?.state === signalR.HubConnectionState.Connected;
+	async getGlobalDebrief(roomId: string) {
+		await this.ensureConnection().invoke("GetGlobalDebrief", roomId);
+	}
+
+	on<T>(event: string, cb: (data: T) => void) {
+		this.connection?.on(event, cb);
+	}
+
+	// ─────────────────────────────
+	// CLEANUP
+	// ─────────────────────────────
+
+	async disconnect() {
+		await this.connection?.stop();
+		this.connection = null;
 	}
 }
 
