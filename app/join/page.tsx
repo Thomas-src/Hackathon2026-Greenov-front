@@ -27,30 +27,17 @@ function generatePositions(count: number, size: number) {
     return positions;
 }
 
-function House({
-                   src,
-                   x,
-                   y,
-                   isMe,
-               }: {
-    src: string;
-    x: number;
-    y: number;
-    isMe: boolean;
-}) {
+function House({ src }: { src: string }) {
     return (
-        <Image
-            alt="Maison"
-            width={128}
-            height={128}
-            src={src}
-            className={`absolute image-pixel ${isMe ? "z-20" : ""}`}
-            style={{
-                left: x,
-                top: y,
-                transform: "translate(-50%, -50%)",
-            }}
-        />
+        <div className="flex items-center justify-center w-32 h-32">
+            <Image
+                alt="Maison"
+                width={128}
+                height={128}
+                src={src}
+                className="image-pixel"
+            />
+        </div>
     );
 }
 
@@ -259,19 +246,16 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
                             </p>
                         </div>
 
-                        <div className="relative w-80 h-80 rounded-2xl overflow-hidden" style={{
-                            background: "linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #4a7c4e 60%)",
-                            border: "1px solid var(--border-strong)"
-                        }}>
+                        <div
+                            className="w-80 h-80 rounded-2xl overflow-hidden flex items-center justify-center gap-2 flex-wrap"
+                            style={{
+                                background: "linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #4a7c4e 60%)",
+                                border: "1px solid var(--border-strong)"
+                            }}
+                        >
                             {players.map((p, i) => (
-                                <House key={i} src={`/houses/${p.profile.image}.gif`} x={p.x} y={p.y} isMe={p.isMe}/>
+                                <House key={i} src={`/square/square${p.profile.image}.gif`}/>
                             ))}
-                            {players.length === 0 && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <p className="text-sm" style={{ color: "rgba(0,0,0,0.4)" }}>Tu seras affiché
-                                        ici...</p>
-                                </div>
-                            )}
                         </div>
 
                         <div className="flex items-center gap-2">

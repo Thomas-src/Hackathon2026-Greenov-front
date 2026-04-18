@@ -117,8 +117,6 @@ function House({
 }
 
 export default function HostGamePage() {
-    const {id: sessionId} = useParams<{ id: string }>();
-
     const containerRef = useRef<HTMLDivElement>(null);
 
     const {playersCount, players, timer,globalCarbon, forceEnd} = useQuiz();
