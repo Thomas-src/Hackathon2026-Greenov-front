@@ -55,10 +55,10 @@ function House({
 }
 
 function ProfileWheel({
-    profiles,
-    selectedId,
-    onSelect,
-}: {
+                          profiles,
+                          selectedId,
+                          onSelect,
+                      }: {
     profiles: Profile[];
     selectedId: string;
     onSelect: (id: string) => void;
@@ -124,15 +124,26 @@ function ProfileWheel({
 export default function JoinPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <JoinContent />
+            <JoinGate />
         </Suspense>
     );
 }
 
-function JoinContent() {
-    const router = useRouter();
+function JoinGate() {
     const searchParams = useSearchParams();
     const roomIdFromUrl = searchParams.get("game");
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        setReady(true);
+    }, []);
+
+    if (!ready) return <div>Loading...</div>;
+    return <JoinContent roomIdFromUrl={roomIdFromUrl} />;
+}
+
+function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
+    const router = useRouter();
 
     const [roomId, setRoomId] = useState(roomIdFromUrl ?? "");
     const [name, setName] = useState("");
@@ -164,10 +175,11 @@ function JoinContent() {
             if (!profile) throw new Error("Profil introuvable");
             await joinRoom(name, profile.id);
             const SIZE = 320;
+            // Fix: use players.length + 1 positions and assign the last one to the new player
             const positions = generatePositions(players.length + 1, SIZE);
             setPlayers(prev => [
                 ...prev.map((p, i) => ({ ...p, x: positions[i].x, y: positions[i].y })),
-                { name, profile, x: SIZE / 2 - 30, y: SIZE / 2 - 30, isMe: true },
+                { name, profile, x: positions[prev.length].x, y: positions[prev.length].y, isMe: true },
             ]);
             setJoined(true);
         } catch (err: any) {
@@ -189,23 +201,23 @@ function JoinContent() {
 
                 {!joined ? (
                     <div className="w-full flex flex-col gap-4 rounded-2xl p-6"
-                        style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                         style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
                         <h2 className="text-xl font-bold text-center">Rejoindre une partie</h2>
 
                         {!roomIdFromUrl && (
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-semibold uppercase tracking-wider"
-                                    style={{ color: "rgba(232,245,232,0.4)" }}>Code de session</label>
+                                       style={{ color: "rgba(232,245,232,0.4)" }}>Code de session</label>
                                 <input value={roomId} onChange={e => setRoomId(e.target.value)} placeholder="Ex: ABC123"
-                                    className="cool-input" />
+                                       className="cool-input" />
                             </div>
                         )}
 
                         <div className="flex flex-col gap-1">
                             <label className="text-xs font-semibold uppercase tracking-wider"
-                                style={{ color: "rgba(232,245,232,0.4)" }}>Pseudo</label>
+                                   style={{ color: "rgba(232,245,232,0.4)" }}>Pseudo</label>
                             <input value={name} onChange={e => setName(e.target.value)} placeholder="Ton nom de joueur"
-                                className="cool-input" />
+                                   className="cool-input" />
                         </div>
 
                         <div className="flex flex-col gap-3">
@@ -224,7 +236,7 @@ function JoinContent() {
                         </div>
 
                         <button onClick={handleJoin} disabled={!name || !roomId || !profileId || isJoining}
-                            className="cool-btn mt-2">
+                                className="cool-btn mt-2">
                             {isJoining ? "Connexion..." : "Rejoindre →"}
                         </button>
 
@@ -265,7 +277,7 @@ function JoinContent() {
                         <div className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--green)" }} />
                             <span className="text-sm"
-                                style={{ color: "rgba(232,245,232,0.5)" }}>En attente de l'hôte</span>
+                                  style={{ color: "rgba(232,245,232,0.5)" }}>En attente de l'hôte</span>
                         </div>
                     </div>
                 )}
@@ -273,9 +285,9 @@ function JoinContent() {
 
             <div className="fixed bottom-4 right-4 flex items-center gap-2">
                 <span className="text-xs"
-                    style={{ color: "rgba(232,245,232,0.3)" }}>{isConnected ? "Connecté" : "Déconnecté"}</span>
+                      style={{ color: "rgba(232,245,232,0.3)" }}>{isConnected ? "Connecté" : "Déconnecté"}</span>
                 <div className={`w-2 h-2 rounded-full ${isConnected ? "animate-pulse" : ""}`}
-                    style={{ background: isConnected ? "var(--green)" : "var(--red)" }} />
+                     style={{ background: isConnected ? "var(--green)" : "var(--red)" }} />
             </div>
         </div>
     );
