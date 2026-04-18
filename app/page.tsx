@@ -15,14 +15,14 @@ export default function Home() {
 
           <div className="flex flex-col gap-4 w-64">
 
-            <Link href="/host">
-              <button className="w-full bg-green-500 hover:bg-green-600 transition p-4 rounded-xl text-lg font-semibold">
+            <Link href="/create">
+              <button className="w-full cursor-pointer bg-green-500 hover:bg-green-600 transition p-4 rounded-xl text-lg font-semibold">
                 Créer une partie
               </button>
             </Link>
 
             <Link href="/join">
-              <button className="w-full bg-blue-500 hover:bg-blue-600 transition p-4 rounded-xl text-lg font-semibold">
+              <button className="w-full cursor-pointer bg-blue-500 hover:bg-blue-600 transition p-4 rounded-xl text-lg font-semibold">
                 Rejoindre une partie
               </button>
             </Link>

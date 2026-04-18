@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { quizSocket } from "@/back/WebSocket";
+import { useWebSocket } from "@/app/providers/WebSocketProvider";
 
 const random = (min: number, max: number) =>
     Math.random() * (max - min) + min;
@@ -23,45 +25,24 @@ type Player = {
     isMe: boolean;
 };
 
-function House({
-                   src,
-                   x,
-                   y,
-                   isMe,
-               }: {
-    src: string;
-    x: number;
-    y: number;
-    isMe?: boolean;
-}) {
-    const [config] = useState(() => ({
-        scale: isMe ? 1.3 : random(0.85, 1.1),
-    }));
+function House({ src, x, y, isMe }: any) {
+    const scale = isMe ? 1.3 : random(0.85, 1.1);
 
     return (
         <img
             src={src}
-            className={`absolute image-pixel ${
-                isMe ? "w-20 z-20 drop-shadow-lg" : "w-16"
-            }`}
+            className={`absolute ${isMe ? "w-20 z-20" : "w-16"}`}
             style={{
                 left: x,
                 top: y,
-                transform: `scale(${config.scale})`,
-                filter: isMe ? "drop-shadow(0 0 10px #4ade80)" : "none",
+                transform: `scale(${scale})`,
             }}
         />
     );
 }
 
-/**
- * Génère les positions des maisons sans les faire apparaître les unes dans les autres
- * @param count Le nombre de maisons
- * @param size La taille
- */
 function generatePositions(count: number, size: number) {
     const positions: { x: number; y: number }[] = [];
-
     const gridSize = 60;
 
     const isTooClose = (x: number, y: number) =>
@@ -96,43 +77,45 @@ export default function JoinPage() {
     const [name, setName] = useState("");
     const [profile, setProfile] = useState<Profile>("house");
     const [joined, setJoined] = useState(false);
-
+    const [isJoining, setIsJoining] = useState(false);
     const [players, setPlayers] = useState<Player[]>([]);
+    const { connect, isConnected } = useWebSocket();
 
-    const handleJoin = () => {
+    const handleJoin = async () => {
         if (!name || !sessionId) return;
 
-        const size = 320;
+        setIsJoining(true);
 
-        const positions = generatePositions(players.length + 1, size);
+        try {
+            await connect();
+            await quizSocket.joinRoom(sessionId, name);
 
-        const newPlayers: Player[] = [
-            ...players.map((p, i) => ({
-                ...p,
-                x: positions[i]?.x || 0,
-                y: positions[i]?.y || 0,
-            })),
-            {
-                id: name,
-                name,
-                profile,
-                x: size / 2 - 40,
-                y: size / 2 - 40,
-                isMe: true,
-            },
-        ];
+            const size = 320;
+            const positions = generatePositions(players.length + 1, size);
 
-        setPlayers(newPlayers);
-        setJoined(true);
+            setPlayers([
+                ...players.map((p, i) => ({
+                    ...p,
+                    x: positions[i]?.x || 0,
+                    y: positions[i]?.y || 0,
+                })),
+                {
+                    id: name,
+                    name,
+                    profile,
+                    x: size / 2 - 40,
+                    y: size / 2 - 40,
+                    isMe: true,
+                },
+            ]);
 
-        console.log("Join session:", {
-            sessionId,
-            name,
-            profile,
-        });
+            setJoined(true);
+        } catch (err) {
+            console.error("Join error", err);
+        } finally {
+            setIsJoining(false);
+        }
     };
-
-    const me = players.find((p) => p.isMe);
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-900 text-white">
@@ -146,7 +129,7 @@ export default function JoinPage() {
                             <input
                                 value={sessionId}
                                 onChange={(e) => setSessionId(e.target.value)}
-                                placeholder="ID de la session"
+                                placeholder="ID session"
                                 className="w-full p-3 rounded-lg text-black"
                             />
                         )}
@@ -154,7 +137,7 @@ export default function JoinPage() {
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="Ton pseudo"
+                            placeholder="Pseudo"
                             className="w-full p-3 rounded-lg text-black"
                         />
 
@@ -170,22 +153,17 @@ export default function JoinPage() {
 
                         <button
                             onClick={handleJoin}
-                            disabled={!name || !sessionId}
-                            className="w-full bg-blue-500 hover:bg-blue-600 p-3 rounded-lg"
+                            disabled={!name || !sessionId || isJoining}
+                            className="w-full bg-blue-500 p-3 rounded-lg"
                         >
-                            Rejoindre
+                            {isJoining ? "Connexion..." : "Rejoindre"}
                         </button>
                     </>
                 ) : (
                     <>
                         <h1 className="text-2xl font-bold">En attente...</h1>
 
-                        <p className="text-zinc-400">
-                            {name}, tu es dans le village
-                        </p>
-
                         <div className="relative w-80 h-80 bg-zinc-800 rounded-lg overflow-hidden">
-
                             {players.map((p) => (
                                 <House
                                     key={p.id}
@@ -195,15 +173,15 @@ export default function JoinPage() {
                                     isMe={p.isMe}
                                 />
                             ))}
-
                         </div>
-
-                        <p className="text-sm text-zinc-500">
-                            Le host va bientôt démarrer la session
-                        </p>
                     </>
                 )}
 
+            </div>
+
+            {/* status */}
+            <div className="fixed bottom-4 right-4">
+                <div className={`w-4 h-4 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
             </div>
         </div>
     );

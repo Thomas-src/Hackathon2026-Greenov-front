@@ -1,23 +1,33 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-
-async function createSession(duration: number): Promise<{ sessionId: string }> {
-    await new Promise((r) => setTimeout(r, 600))
-    const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase()
-    return { sessionId }
-}
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { quizSocket } from "@/back/WebSocket";
+import { useWebSocket } from "@/app/providers/WebSocketProvider";
 
 export default function CreatePage() {
     const [duration, setDuration] = useState(10);
+    const [isCreating, setIsCreating] = useState(false);
     const router = useRouter();
+    const { isConnected } = useWebSocket();
 
     const handleCreate = async () => {
-        const data = await createSession(duration)
-        router.push('/lobby/${data.sessionId}')
-    }
+        if (duration <= 0) return;
 
+        setIsCreating(true);
+
+        try {
+            await quizSocket.connect();
+
+            const roomId = await quizSocket.createRoom();
+
+            router.push(`/lobby/${encodeURIComponent(roomId)}`);
+        } catch (err) {
+            console.error("Erreur création room", err);
+        } finally {
+            setIsCreating(false);
+        }
+    };
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-900 text-white">
             <div className="flex flex-col gap-6 w-80">
@@ -33,19 +43,26 @@ export default function CreatePage() {
                     type="number"
                     value={duration}
                     onChange={(e) => setDuration(Number(e.target.value))}
-                    className="w-full p-3 rounded-lg text-white"
+                    className="w-full p-3 rounded-lg text-white border border-zinc-700 bg-zinc-800"
                     placeholder="Durée (minutes)"
                 />
 
                 <button
                     onClick={handleCreate}
-                    disabled={duration <= 0}
-                    className="w-full bg-blue-500 hover:bg-blue-600 p-3 rounded-lg disabled:opacity-50"
+                    disabled={duration <= 0 || isCreating}
+                    className="cursor-pointer w-full bg-blue-500 hover:bg-blue-600 p-3 rounded-lg disabled:opacity-50"
                 >
-                    Créer
+                    {isCreating ? "Creation..." : "Creer"}
                 </button>
 
             </div>
+
+            <div className="fixed bottom-4 right-4">
+    <div
+        className={`w-4 h-4 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}
+        title={isConnected ? "WebSocket connecté" : "WebSocket déconnecté"}
+    />
+</div>
         </div>
     )
 }
