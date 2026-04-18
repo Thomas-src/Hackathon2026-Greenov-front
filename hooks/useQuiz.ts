@@ -14,12 +14,12 @@ import type {
     ActionFeedback,
     VillageUpdate,
     Debrief,
-    GlobalDebrief,
+    GlobalDebrief, GameStartedHost, GameStartedPlayer,
 } from "@/app/types/socket.t";
 
 export function useQuiz(roomId?: string) {
     const { isConnected } = useWebSocket();
-    const { playersCount, setPlayersCount, village, setVillage, timer, setTimer } = useGameState();
+    const { playersCount, setPlayersCount, setPlayers, village, setVillage, timer, setTimer } = useGameState();
 
     // ─────────────────────────────
     // STATE GAME (local uniquement)
@@ -86,7 +86,28 @@ export function useQuiz(roomId?: string) {
         quizSocket.on<PlayerJoined>("PlayerJoined", (data) => {
             setPlayersCount(data.playerCount);
         });
-        quizSocket.on<GameStarted>("GameStarted", () => {
+        quizSocket.on<GameStartedHost>("GameStartedHost", (data) => {
+            setGameStarted(true);
+
+            setTimer({
+                remaining: data.remaining,
+                total: data.remaining,
+            });
+
+            if (data.players) {
+                const players = data.players.map((p) => ({
+                    username: p.username,
+                    profile: p.profile,
+                    score: p.score,
+                    co2: p.carbonLevel,
+                }));
+
+                setPlayers(players);
+                setPlayersCount(players.length);
+            }
+        });
+
+        quizSocket.on<GameStartedPlayer>("GameStartedPlayer", () => {
             setGameStarted(true);
         });
         quizSocket.on<NewEvent>("NewEvent", (data) => {

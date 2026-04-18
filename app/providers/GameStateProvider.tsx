@@ -19,6 +19,7 @@ type GameStateContextValue = {
     setVillage: (v: VillageUpdate) => void;
     timer: TimerTick | null;
     setTimer: (t: TimerTick) => void;
+    setPlayers: (players: Player[]) => void;
 };
 
 const GameStateContext = createContext<GameStateContextValue | null>(null);
@@ -48,7 +49,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
 
     return (
         <GameStateContext.Provider value={{
-            playersCount, setPlayersCount,
+            playersCount, setPlayersCount, setPlayers,
             players, updatePlayer,
             village, setVillage,
             timer, setTimer,

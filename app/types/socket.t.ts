@@ -8,6 +8,19 @@ export type PlayerJoined = {
     playerCount: number;
 };
 
+// GameStarted (HOST)
+export type GameStartedHost = {
+    remaining: number;
+    players: any[];
+    carbon: number;
+};
+
+// GameStarted (PLAYER)
+export type GameStartedPlayer = {
+    houseState: number;
+    carbon: number;
+};
+
 export type GameStarted = {
     durationMinutes: number;
     totalEvents: number;
