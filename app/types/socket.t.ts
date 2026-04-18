@@ -1,3 +1,7 @@
+export type JoinFailed = {
+    message: string;
+};
+
 export type PlayerJoined = {
     username: string;
     profile: string;

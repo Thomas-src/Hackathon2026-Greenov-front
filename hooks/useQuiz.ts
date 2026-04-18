@@ -36,6 +36,8 @@ export function useQuiz(roomId?: string) {
     const [debrief, setDebrief] = useState<Debrief | null>(null);
     const [globalDebrief, setGlobalDebrief] = useState<GlobalDebrief | null>(null);
 
+    const [gameStarted, setGameStarted] = useState(false);
+
     // ─────────────────────────────
     // ACTIONS
     // ─────────────────────────────
@@ -91,8 +93,6 @@ export function useQuiz(roomId?: string) {
             setPlayersCount(data.playerCount);
         });
 
-        quizSocket.on<GameStarted>("GameStarted", () => {});
-
         quizSocket.on<NewEvent>("NewEvent", (data) => {
             setCurrentEvent(data);
             setWaiting(null);
@@ -104,18 +104,15 @@ export function useQuiz(roomId?: string) {
         });
 
         quizSocket.on<TimerTick>("TimerTick", setTimer);
-
         quizSocket.on<ActionFeedback>("ActionFeedback", setFeedback);
-
         quizSocket.on<VillageUpdate>("VillageUpdate", setVillage);
-
         quizSocket.on<Debrief>("Debrief", setDebrief);
-
         quizSocket.on<GlobalDebrief>("GlobalDebrief", setGlobalDebrief);
 
-        return () => {
-            quizSocket.disconnect();
-        };
+        quizSocket.on<GameStarted>("GameStarted", () => {
+            setGameStarted(true);
+        });
+
     }, [isConnected]);
 
     // ─────────────────────────────
@@ -133,6 +130,7 @@ export function useQuiz(roomId?: string) {
         village,
         debrief,
         globalDebrief,
+        gameStarted,
 
         // actions
         joinRoom,
