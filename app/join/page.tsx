@@ -30,6 +30,7 @@ function House({ src, x, y, isMe }: any) {
 
     return (
         <img
+            alt={`Maison`}
             src={src}
             className={`absolute ${isMe ? "w-20 z-20" : "w-16"}`}
             style={{
