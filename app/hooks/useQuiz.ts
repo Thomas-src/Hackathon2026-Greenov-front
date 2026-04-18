@@ -62,9 +62,8 @@ export function useQuiz(roomId?: string) {
     }, [roomId]);
 
     const createRoom = useCallback(async (duration: number) => {
-        if (!roomId) return;
         return await quizSocket.createRoom(duration);
-    }, [roomId]);
+    }, []);
 
     const forceEnd = useCallback(async () => {
         if (!roomId) return;
