@@ -16,9 +16,9 @@ export default function CreatePage() {
         if (duration <= 0) return;
         setIsCreating(true);
         try {
-            const roomId = await createRoom(duration);
-            if (!roomId) { console.warn("Room ID does not exist!"); return; }
-            router.push(`/lobby/${encodeURIComponent(roomId)}`);
+            const roomCreated = await createRoom(duration);
+            if (!roomCreated) { console.warn("Room ID does not exist!"); return; }
+            router.push(`/lobby/${encodeURIComponent(roomCreated.roomId)}`);
         } catch (err) {
             console.error("Erreur création room", err);
         } finally {
@@ -31,7 +31,7 @@ export default function CreatePage() {
             <div className="w-full max-w-sm flex flex-col gap-6">
 
                 <div className="text-center">
-                    <h1 className="text-4xl font-black" style={{ color: "var(--green)" }}>Jeux'Rénov</h1>
+                    <h1 className="text-4xl font-black" style={{ color: "var(--green)" }}>Jeux&#39;Rénov</h1>
                     <p className="text-sm mt-1" style={{ color: "rgba(232,245,232,0.5)" }}>Créer une nouvelle partie</p>
                 </div>
 
