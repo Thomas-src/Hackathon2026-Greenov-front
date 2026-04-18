@@ -14,12 +14,12 @@ import type {
     GlobalDebrief,
     GameStartedHost,
     RoomCreated,
-    PlayerLeft, PlayerSummary,
+    PlayerLeft, PlayerSummary, TimerTick,
 } from "@/back/types/socket.t";
 
 export function useQuiz(roomId?: string) {
     const { isConnected } = useWebSocket();
-    const { playersCount, setPlayersCount, setPlayers, village, setVillage, timer, setTimer } = useGameState();
+    const { playersCount, setPlayersCount, players, setPlayers, village, setVillage, timer, setTimer } = useGameState();
 
     // ─────────────────────────────
     // STATE
@@ -66,6 +66,22 @@ export function useQuiz(roomId?: string) {
         await quizSocket.getMyDebrief(roomId);
     }, [roomId]);
 
+    // Timer
+    useEffect(() => {
+        const id = setInterval(() => {
+            setTimer(prev => {
+                if (!prev) return prev;
+
+                return {
+                    ...prev,
+                    remaining: Math.max(0, prev.remaining - 1),
+                };
+            });
+        }, 1000);
+
+        return () => clearInterval(id);
+    }, [setTimer]);
+
     // ─────────────────────────────
     // EVENTS BINDING
     // ─────────────────────────────
@@ -100,9 +116,16 @@ export function useQuiz(roomId?: string) {
             setPlayers(players);
             setPlayersCount(players.length);
 
-            const totalSeconds = data.endsAtUnix - Math.floor(Date.now() / 1000);
-            setTimer({ remaining: totalSeconds, total: totalSeconds });
+            const totalSeconds = Math.max(0, data.endsAtUnix - Math.floor(Date.now() / 1000));
+            console.log("remaining:", totalSeconds, "seconds");
+
+            setTimer({
+                remaining: totalSeconds,
+                total: totalSeconds,
+            });
         });
+
+
 
         quizSocket.on("GameStartedPlayer", () => {
             setGameStarted(true);
@@ -118,7 +141,7 @@ export function useQuiz(roomId?: string) {
             setCurrentEvent(null);
         });
 
-        quizSocket.on("TimerTick", setTimer);
+       // quizSocket.on("TimerTick", setTimer);
 
         quizSocket.on("ActionFeedback", setFeedback);
 
@@ -148,7 +171,7 @@ export function useQuiz(roomId?: string) {
         globalDebrief,
         gameStarted,
         globalCarbon,
-
+        players,
         createRoom,
         joinRoom,
         startGame,

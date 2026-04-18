@@ -4,9 +4,9 @@ import {useEffect, useRef, useState} from "react";
 import {useParams} from "next/navigation";
 import Image from "next/image";
 import {useQuiz} from "@/hooks/useQuiz";
-import {PlayerSummary, Profile} from "@/back/types/socket.t";
+import {PlayerSummary} from "@/back/types/socket.t";
 
-const houseByProfile: Record<Profile, string> = {
+const houseByProfile: Record<string, string> = {
     proprietaire: "/houses/house.gif",
     locataire: "/houses/flat.gif",
     entreprise: "/houses/company.gif",
@@ -96,7 +96,7 @@ function House({
             }}
         >
             <Image
-                src={houseByProfile[player.profile]}
+                src={houseByProfile[player.profile.toLowerCase()]}
                 alt={player.username}
                 width={size}
                 height={size * 0.6}
@@ -121,33 +121,7 @@ export default function HostGamePage() {
 
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const {playersCount, village, timer, forceEnd} = useQuiz();
-
-    const [players, setPlayers] = useState<PlayerSummary[]>([]);
-
-    useEffect(() => {
-        if (!village) return;
-
-        setPlayers((prev) => {
-            const updated: PlayerSummary = {
-                connectionId: village.connectionId,
-                username: village.username,
-                profile: village.profile as Profile,
-                score: village.playerScore,
-                carbone: village.globalCarbon,
-            };
-
-            const exists = prev.find((p) => p.username === village.username);
-
-            if (exists) {
-                return prev.map((p) =>
-                    p.username === village.username ? updated : p
-                );
-            }
-
-            return [...prev, updated];
-        });
-    }, [village]);
+    const {playersCount, players, timer,globalCarbon, forceEnd} = useQuiz();
 
     const [layout, setLayout] = useState<{
         positions: { x: number; y: number }[];
@@ -190,7 +164,7 @@ export default function HostGamePage() {
     }, [players.length]);
 
     const timeLeft = timer?.remaining ?? 0;
-
+console.log("Timeleft :" + timeLeft);
     function formatTime(seconds: number) {
         const min = Math.floor(seconds / 60);
         const sec = seconds % 60;
@@ -198,6 +172,9 @@ export default function HostGamePage() {
             sec
         ).padStart(2, "0")}`;
     }
+    const sortedPlayers = [...players].sort(
+        (a, b) => a.connectionId.localeCompare(b.connectionId)
+    );
 
     const averageScore =
         players.length > 0
@@ -215,7 +192,7 @@ export default function HostGamePage() {
             )
             : 0;
 
-    const progress = 100 - averageCo2;
+    const progress = Math.max(0, Math.min(100, 100 - globalCarbon));
 
     return (
         <main
@@ -321,6 +298,7 @@ export default function HostGamePage() {
                             background: "var(--red-bg)",
                             color: "var(--red)",
                             border: "1px solid var(--red-border)",
+                            cursor: "pointer",
                         }}
                     >
                         Forcer la fin
@@ -359,17 +337,20 @@ export default function HostGamePage() {
                                 }}
                             />
 
-                            {layout.positions.map((pos, i) =>
-                                players[i] ? (
+                            {sortedPlayers.map((player, i) => {
+                                const pos = layout.positions[i];
+                                if (!pos) return null;
+
+                                return (
                                     <House
-                                        key={players[i].username}
-                                        player={players[i]}
+                                        key={player.connectionId}
+                                        player={player}
                                         x={pos.x}
                                         y={pos.y}
                                         size={layout.size}
                                     />
-                                ) : null
-                            )}
+                                );
+                            })}
 
                             {players.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center">

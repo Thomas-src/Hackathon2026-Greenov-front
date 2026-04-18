@@ -12,7 +12,7 @@ type GameStateContextValue = {
     village: VillageUpdate | null;
     setVillage: (v: VillageUpdate) => void;
     timer: TimerTick | null;
-    setTimer: (t: TimerTick) => void;
+    setTimer: React.Dispatch<React.SetStateAction<TimerTick | null>>
 };
 
 const GameStateContext = createContext<GameStateContextValue | null>(null);

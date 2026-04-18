@@ -5,6 +5,7 @@ import {useRouter, useSearchParams} from "next/navigation";
 import {useWebSocket} from "@/app/providers/WebSocketProvider";
 import {useQuiz} from "@/hooks/useQuiz";
 import {BACKEND_URL} from "@/utils/constants";
+import Image from "next/image";
 
 type Profile = { id: string; label: string; image: string };
 type Player = { name: string; profile: Profile; x: number; y: number; isMe: boolean };
@@ -26,10 +27,30 @@ function generatePositions(count: number, size: number) {
     return positions;
 }
 
-function House({src, x, y, isMe, scale}: { src: string; x: number; y: number; isMe: boolean; scale: number }) {
+function House({
+                   src,
+                   x,
+                   y,
+                   isMe,
+               }: {
+    src: string;
+    x: number;
+    y: number;
+    isMe: boolean;
+}) {
     return (
-        <img alt="Maison" src={src} className={`absolute image-pixel ${isMe ? "w-20 z-20" : "w-16"}`}
-             style={{left: x, top: y, transform: `scale(${scale})`}}/>
+        <Image
+            alt="Maison"
+            width={128}
+            height={128}
+            src={src}
+            className={`absolute image-pixel ${isMe ? "z-20" : ""}`}
+            style={{
+                left: x,
+                top: y,
+                transform: "translate(-50%, -50%)",
+            }}
+        />
     );
 }
 
@@ -159,8 +180,7 @@ function JoinContent() {
                             border: "1px solid var(--border-strong)"
                         }}>
                             {players.map((p, i) => (
-                                <House key={i} src={`/houses/${p.profile.image}.gif`} x={p.x} y={p.y} isMe={p.isMe}
-                                       scale={p.isMe ? 1.3 : random(0.85, 1.1)}/>
+                                <House key={i} src={`/houses/${p.profile.image}.gif`} x={p.x} y={p.y} isMe={p.isMe}/>
                             ))}
                             {players.length === 0 && (
                                 <div className="absolute inset-0 flex items-center justify-center">
