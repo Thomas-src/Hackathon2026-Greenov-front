@@ -11,14 +11,31 @@ class QuizSocket {
 	async connect() {
 		if (this.isConnected()) return;
 
+		// Si une connexion est déjà en cours, attend qu'elle finisse
+		if (this.connection?.state === signalR.HubConnectionState.Connecting) {
+			await new Promise<void>((resolve) => {
+				const interval = setInterval(() => {
+					if (this.isConnected()) {
+						clearInterval(interval);
+						resolve();
+					}
+				}, 50);
+			});
+			return;
+		}
+
 		this.connection = new signalR.HubConnectionBuilder()
 			.withUrl(`${BACKEND_URL}/hub`)
 			.withAutomaticReconnect()
 			.build();
 
 		this.registerHandlers();
-
 		await this.connection.start();
+	}
+
+	async createRoom(duration: number): Promise<string> {
+		await this.connect();
+		return await this.ensureConnection().invoke("CreateRoom", duration);
 	}
 
 	isConnected() {
@@ -80,19 +97,50 @@ class QuizSocket {
 	// ROOM (HOST / PLAYER)
 	// ─────────────────────────────
 
-	async createRoom(duration: number): Promise<string> {
-		return await this.ensureConnection().invoke("CreateRoom", duration);
-	}
+	async joinRoom(roomId: string, username: string, profile: string): Promise<void> {
+		await this.connect();
+		console.log("[joinRoom] connected, invoking JoinRoom...");
 
-	async joinRoom(roomId: string, username: string, profile: string) {
-		await this.ensureConnection().invoke("JoinRoom", roomId, username, profile);
+		return new Promise((resolve, reject) => {
+			const conn = this.ensureConnection();
+
+			const onSuccess = (data: any) => {
+				console.log("[joinRoom] JoinSuccess received", data);
+				conn.off("JoinSuccess", onSuccess);
+				conn.off("JoinFailed", onFailed);
+				resolve();
+			};
+
+			const onFailed = (data: { message: string }) => {
+				console.log("[joinRoom] JoinFailed received", data);
+				conn.off("JoinSuccess", onSuccess);
+				conn.off("JoinFailed", onFailed);
+				reject(new Error(data.message));
+			};
+
+			conn.on("JoinSuccess", onSuccess);
+			conn.on("JoinFailed", onFailed);
+
+			console.log("[joinRoom] handlers registered, invoking...");
+
+			conn.invoke("JoinRoom", roomId, username, profile)
+				.then(() => console.log("[joinRoom] invoke resolved"))
+				.catch((err) => {
+					console.error("[joinRoom] invoke failed", err);
+					conn.off("JoinSuccess", onSuccess);
+					conn.off("JoinFailed", onFailed);
+					reject(err);
+				});
+		});
 	}
 
 	async startGame(roomId: string) {
+		await this.connect();
 		await this.ensureConnection().invoke("StartGame", roomId);
 	}
 
 	async forceEnd(roomId: string) {
+		await this.connect();
 		await this.ensureConnection().invoke("ForceEndGame", roomId);
 	}
 
@@ -101,18 +149,22 @@ class QuizSocket {
 	// ─────────────────────────────
 
 	async submitAction(roomId: string, actionId: string) {
+		await this.connect();
 		await this.ensureConnection().invoke("SubmitAction", roomId, actionId);
 	}
 
 	async getDebrief(roomId: string) {
+		await this.connect();
 		await this.ensureConnection().invoke("GetMyDebrief", roomId);
 	}
 
 	async getGlobalDebrief(roomId: string) {
+		await this.connect();
 		await this.ensureConnection().invoke("GetGlobalDebrief", roomId);
 	}
 
 	on<T>(event: string, cb: (data: T) => void) {
+		this.connection?.off(event);
 		this.connection?.on(event, cb);
 	}
 
