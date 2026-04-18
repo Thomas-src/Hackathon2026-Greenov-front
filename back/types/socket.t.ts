@@ -69,6 +69,7 @@ export interface ActionChoice {
 export interface NewEvent {
     id: string;
     title: string;
+    type: string;
     description: string;
     eventNumber: number;
     totalEvents: number;
