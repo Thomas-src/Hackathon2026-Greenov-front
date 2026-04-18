@@ -3,83 +3,67 @@
 import { useEffect, useState, useCallback } from "react";
 import { quizSocket } from "@/back/WebSocket";
 import { useWebSocket } from "@/app/providers/WebSocketProvider";
+import { useGameState } from "@/app/providers/GameStateProvider";
 
 import type {
-    PlayerJoined,
-    GameStarted,
     NewEvent,
     WaitingForOthers,
-    TimerTick,
     ActionFeedback,
     VillageUpdate,
-    Debrief,
+    PlayerDebrief,
     GlobalDebrief,
-} from "@/app/types/socket.t";
+    GameStartedHost,
+    RoomCreated,
+    PlayerLeft, PlayerSummary,
+} from "@/back/types/socket.t";
 
 export function useQuiz(roomId?: string) {
     const { isConnected } = useWebSocket();
+    const { playersCount, setPlayersCount, setPlayers, village, setVillage, timer, setTimer } = useGameState();
 
     // ─────────────────────────────
-    // STATE GAME
+    // STATE
     // ─────────────────────────────
 
-    const [playersCount, setPlayersCount] = useState(0);
-
-    const [currentEvent, setCurrentEvent] = useState<NewEvent | null>(null);
-    const [waiting, setWaiting] = useState<WaitingForOthers | null>(null);
-
-    const [timer, setTimer] = useState<TimerTick | null>(null);
-    const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
-
-    const [village, setVillage] = useState<VillageUpdate | null>(null);
-
-    const [debrief, setDebrief] = useState<Debrief | null>(null);
+    const [currentEvent, setCurrentEvent]   = useState<NewEvent | null>(null);
+    const [waiting, setWaiting]             = useState<WaitingForOthers | null>(null);
+    const [feedback, setFeedback]           = useState<ActionFeedback | null>(null);
+    const [debrief, setDebrief]             = useState<PlayerDebrief | null>(null);
     const [globalDebrief, setGlobalDebrief] = useState<GlobalDebrief | null>(null);
-
-    const [gameStarted, setGameStarted] = useState(false);
+    const [gameStarted, setGameStarted]     = useState(false);
+    const [globalCarbon, setGlobalCarbon]   = useState(0);
 
     // ─────────────────────────────
     // ACTIONS
     // ─────────────────────────────
 
-    const submitAction = useCallback(
-        async (actionId: string) => {
-            if (!roomId) return;
-            await quizSocket.submitAction(roomId, actionId);
-        },
-        [roomId]
-    );
+    const createRoom = useCallback(async (durationMinutes: number): Promise<RoomCreated> => {
+        return quizSocket.createRoom(durationMinutes);
+    }, []);
 
-    const joinRoom = useCallback(
-        async (username: string, profile: string) => {
-            if (!roomId) return;
-            await quizSocket.joinRoom(roomId, username, profile);
-        },
-        [roomId]
-    );
+    const joinRoom = useCallback(async (username: string, profile: string) => {
+        if (!roomId) return;
+        await quizSocket.joinRoom(roomId, username, profile);
+    }, [roomId]);
 
     const startGame = useCallback(async () => {
         if (!roomId) return;
         await quizSocket.startGame(roomId);
     }, [roomId]);
 
-    const createRoom = useCallback(async (duration: number) => {
-        return await quizSocket.createRoom(duration);
-    }, []);
-
     const forceEnd = useCallback(async () => {
         if (!roomId) return;
         await quizSocket.forceEnd(roomId);
     }, [roomId]);
 
-    const getDebrief = useCallback(async () => {
+    const submitAction = useCallback(async (actionId: string) => {
         if (!roomId) return;
-        await quizSocket.getDebrief(roomId);
+        await quizSocket.submitAction(roomId, actionId);
     }, [roomId]);
 
-    const getGlobalDebrief = useCallback(async () => {
+    const getMyDebrief = useCallback(async () => {
         if (!roomId) return;
-        await quizSocket.getGlobalDebrief(roomId);
+        await quizSocket.getMyDebrief(roomId);
     }, [roomId]);
 
     // ─────────────────────────────
@@ -89,30 +73,63 @@ export function useQuiz(roomId?: string) {
     useEffect(() => {
         if (!isConnected) return;
 
-        quizSocket.on<PlayerJoined>("PlayerJoined", (data) => {
+        quizSocket.on("PlayerJoined", (data) => {
             setPlayersCount(data.playerCount);
         });
 
-        quizSocket.on<NewEvent>("NewEvent", (data) => {
+        quizSocket.on("PlayerLeft", (data: PlayerLeft) => {
+            setPlayersCount(data.playerCount);
+            setPlayers((prev) => prev.filter((p) => p.username !== data.username));
+        });
+
+        quizSocket.on("JoinSuccess", (data) => {
+            setPlayersCount(data.playerCount);
+        });
+
+        quizSocket.on("GameStartedHost", (data: GameStartedHost) => {
+            setGameStarted(true);
+            setGlobalCarbon(data.globalCarbon);
+
+            const players: PlayerSummary[] = data.players.map((p) => ({
+                connectionId: p.connectionId,
+                username: p.username,
+                profile: p.profile,
+                score: p.score,
+                carbone: p.carbone
+            }));
+            setPlayers(players);
+            setPlayersCount(players.length);
+
+            const totalSeconds = data.endsAtUnix - Math.floor(Date.now() / 1000);
+            setTimer({ remaining: totalSeconds, total: totalSeconds });
+        });
+
+        quizSocket.on("GameStartedPlayer", () => {
+            setGameStarted(true);
+        });
+
+        quizSocket.on("NewEvent", (data) => {
             setCurrentEvent(data);
             setWaiting(null);
         });
 
-        quizSocket.on<WaitingForOthers>("WaitingForOthers", (data) => {
+        quizSocket.on("WaitingForOthers", (data) => {
             setWaiting(data);
             setCurrentEvent(null);
         });
 
-        quizSocket.on<TimerTick>("TimerTick", setTimer);
-        quizSocket.on<ActionFeedback>("ActionFeedback", setFeedback);
-        quizSocket.on<VillageUpdate>("VillageUpdate", setVillage);
-        quizSocket.on<Debrief>("Debrief", setDebrief);
-        quizSocket.on<GlobalDebrief>("GlobalDebrief", setGlobalDebrief);
+        quizSocket.on("TimerTick", setTimer);
 
-        quizSocket.on<GameStarted>("GameStarted", () => {
-            setGameStarted(true);
+        quizSocket.on("ActionFeedback", setFeedback);
+
+        quizSocket.on("VillageUpdate", (data: VillageUpdate) => {
+            setVillage(data);
+            setGlobalCarbon(data.globalCarbon);
         });
 
+        quizSocket.on("Debrief", setDebrief);
+
+        quizSocket.on("GlobalDebrief", setGlobalDebrief);
     }, [isConnected]);
 
     // ─────────────────────────────
@@ -120,7 +137,6 @@ export function useQuiz(roomId?: string) {
     // ─────────────────────────────
 
     return {
-        // state
         isConnected,
         playersCount,
         currentEvent,
@@ -131,14 +147,13 @@ export function useQuiz(roomId?: string) {
         debrief,
         globalDebrief,
         gameStarted,
+        globalCarbon,
 
-        // actions
+        createRoom,
         joinRoom,
-        submitAction,
         startGame,
         forceEnd,
-        getDebrief,
-        getGlobalDebrief,
-        createRoom
+        submitAction,
+        getMyDebrief,
     };
 }

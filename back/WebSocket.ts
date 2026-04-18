@@ -1,181 +1,196 @@
 import * as signalR from "@microsoft/signalr";
-import { BACKEND_URL } from "@/utils/constants";
+import {BACKEND_URL} from "@/utils/constants";
+import type {JoinFailed, JoinSuccess, QuizHubServerEvents, RoomCreated,} from "@/back/types/socket.t";
 
 class QuizSocket {
-	private connection: signalR.HubConnection | null = null;
+    private connection: signalR.HubConnection | null = null;
 
-	// ─────────────────────────────
-	// CONNECTION
-	// ─────────────────────────────
+    // ─────────────────────────────
+    // CONNECTION
+    // ─────────────────────────────
 
-	async connect() {
-		if (this.isConnected()) return;
+    async connect(): Promise<void> {
+        if (this.isConnected()) return;
 
-		// Si une connexion est déjà en cours, attend qu'elle finisse
-		if (this.connection?.state === signalR.HubConnectionState.Connecting) {
-			await new Promise<void>((resolve) => {
-				const interval = setInterval(() => {
-					if (this.isConnected()) {
-						clearInterval(interval);
-						resolve();
-					}
-				}, 50);
-			});
-			return;
-		}
+        if (this.connection?.state === signalR.HubConnectionState.Connecting) {
+            await new Promise<void>((resolve) => {
+                const interval = setInterval(() => {
+                    if (this.isConnected()) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 50);
+            });
+            return;
+        }
 
-		this.connection = new signalR.HubConnectionBuilder()
-			.withUrl(`${BACKEND_URL}/hub`)
-			.withAutomaticReconnect()
-			.build();
+        this.connection = new signalR.HubConnectionBuilder()
+            .withUrl(`${BACKEND_URL}/hub`)
+            .withAutomaticReconnect()
+            .build();
 
-		this.registerHandlers();
-		await this.connection.start();
-	}
+        this.registerHandlers();
+        await this.connection.start();
+    }
 
-	async createRoom(duration: number): Promise<string> {
-		await this.connect();
-		return await this.ensureConnection().invoke("CreateRoom", duration);
-	}
+    isConnected(): boolean {
+        return this.connection?.state === signalR.HubConnectionState.Connected;
+    }
 
-	isConnected() {
-		return this.connection?.state === signalR.HubConnectionState.Connected;
-	}
+    private ensureConnection(): signalR.HubConnection {
+        if (!this.connection || !this.isConnected()) {
+            throw new Error("SignalR not connected");
+        }
+        return this.connection;
+    }
 
-	private ensureConnection() {
-		if (!this.connection || !this.isConnected()) {
-			throw new Error("SignalR not connected");
-		}
-		return this.connection;
-	}
+    // ─────────────────────────────
+    // EVENTS REGISTRATION
+    // ─────────────────────────────
 
-	// ─────────────────────────────
-	// EVENTS REGISTRATION
-	// ─────────────────────────────
+    private registerHandlers(): void {
+        if (!this.connection) return;
 
-	private registerHandlers() {
-		if (!this.connection) return;
+        this.connection.on("PlayerJoined", (data: QuizHubServerEvents["PlayerJoined"]) => {
+            console.log("PlayerJoined", data);
+        });
+        this.connection.on("PlayerLeft", (data: QuizHubServerEvents["PlayerLeft"]) => {
+            console.log("PlayerLeft", data);
+        });
+        this.connection.on("GameStartedHost", (data: QuizHubServerEvents["GameStartedHost"]) => {
+            console.log("GameStartedHost", data);
+        });
+        this.connection.on("GameStartedPlayer", (data: QuizHubServerEvents["GameStartedPlayer"]) => {
+            console.log("GameStartedPlayer", data);
+        });
+        this.connection.on("NewEvent", (data: QuizHubServerEvents["NewEvent"]) => {
+            console.log("NewEvent", data);
+        });
+        this.connection.on("WaitingForOthers", (data: QuizHubServerEvents["WaitingForOthers"]) => {
+            console.log("WaitingForOthers", data);
+        });
+        this.connection.on("TimerTick", (data: QuizHubServerEvents["TimerTick"]) => {
+            console.log("TimerTick", data);
+        });
+        this.connection.on("ActionFeedback", (data: QuizHubServerEvents["ActionFeedback"]) => {
+            console.log("ActionFeedback", data);
+        });
+        this.connection.on("VillageUpdate", (data: QuizHubServerEvents["VillageUpdate"]) => {
+            console.log("VillageUpdate", data);
+        });
+        this.connection.on("Debrief", (data: QuizHubServerEvents["Debrief"]) => {
+            console.log("Debrief", data);
+        });
+        this.connection.on("GlobalDebrief", (data: QuizHubServerEvents["GlobalDebrief"]) => {
+            console.log("GlobalDebrief", data);
+        });
+    }
 
-		this.connection.on("PlayerJoined", (data) => {
-			console.log("PlayerJoined", data);
-		});
+    // ─────────────────────────────
+    // ROOM (HOST)
+    // ─────────────────────────────
 
-		this.connection.on("GameStarted", (data) => {
-			console.log("GameStarted", data);
-		});
+    async createRoom(durationMinutes: number): Promise<RoomCreated> {
+        await this.connect();
 
-		this.connection.on("NewEvent", (data) => {
-			console.log("NewEvent", data);
-		});
+        return new Promise<RoomCreated>((resolve, reject) => {
+            const conn = this.ensureConnection();
 
-		this.connection.on("WaitingForOthers", (data) => {
-			console.log("WaitingForOthers", data);
-		});
+            const onCreated = (data: RoomCreated) => {
+                conn.off("RoomCreated", onCreated);
+                resolve(data);
+            };
 
-		this.connection.on("TimerTick", (data) => {
-			console.log("TimerTick", data);
-		});
+            conn.on("RoomCreated", onCreated);
 
-		this.connection.on("ActionFeedback", (data) => {
-			console.log("ActionFeedback", data);
-		});
+            conn.invoke("CreateRoom", durationMinutes).catch((err: unknown) => {
+                conn.off("RoomCreated", onCreated);
+                reject(err);
+            });
+        });
+    }
 
-		this.connection.on("VillageUpdate", (data) => {
-			console.log("VillageUpdate", data);
-		});
+    async startGame(roomId: string): Promise<void> {
+        await this.connect();
+        await this.ensureConnection().invoke("StartGame", roomId);
+    }
 
-		this.connection.on("Debrief", (data) => {
-			console.log("Debrief", data);
-		});
+    async forceEnd(roomId: string): Promise<void> {
+        await this.connect();
+        await this.ensureConnection().invoke("ForceEndGame", roomId);
+    }
 
-		this.connection.on("GlobalDebrief", (data) => {
-			console.log("GlobalDebrief", data);
-		});
-	}
+    // ─────────────────────────────
+    // ROOM (PLAYER)
+    // ─────────────────────────────
 
-	// ─────────────────────────────
-	// ROOM (HOST / PLAYER)
-	// ─────────────────────────────
+    async joinRoom(roomId: string, username: string, profile: string): Promise<JoinSuccess> {
+        await this.connect();
 
-	async joinRoom(roomId: string, username: string, profile: string): Promise<void> {
-		await this.connect();
-		console.log("[joinRoom] connected, invoking JoinRoom...");
+        return new Promise<JoinSuccess>((resolve, reject) => {
+            const conn = this.ensureConnection();
 
-		return new Promise((resolve, reject) => {
-			const conn = this.ensureConnection();
+            const onSuccess = (data: JoinSuccess) => {
+                conn.off("JoinSuccess", onSuccess);
+                conn.off("JoinFailed", onFailed);
+                resolve(data);
+            };
 
-			const onSuccess = (data: any) => {
-				console.log("[joinRoom] JoinSuccess received", data);
-				conn.off("JoinSuccess", onSuccess);
-				conn.off("JoinFailed", onFailed);
-				resolve();
-			};
+            const onFailed = (data: JoinFailed) => {
+                conn.off("JoinSuccess", onSuccess);
+                conn.off("JoinFailed", onFailed);
+                reject(new Error(data.message));
+            };
 
-			const onFailed = (data: { message: string }) => {
-				console.log("[joinRoom] JoinFailed received", data);
-				conn.off("JoinSuccess", onSuccess);
-				conn.off("JoinFailed", onFailed);
-				reject(new Error(data.message));
-			};
+            conn.on("JoinSuccess", onSuccess);
+            conn.on("JoinFailed", onFailed);
 
-			conn.on("JoinSuccess", onSuccess);
-			conn.on("JoinFailed", onFailed);
+            conn.invoke("JoinRoom", roomId, username, profile).catch((err: unknown) => {
+                conn.off("JoinSuccess", onSuccess);
+                conn.off("JoinFailed", onFailed);
+                reject(err);
+            });
+        });
+    }
 
-			console.log("[joinRoom] handlers registered, invoking...");
+    // ─────────────────────────────
+    // GAME ACTIONS
+    // ─────────────────────────────
 
-			conn.invoke("JoinRoom", roomId, username, profile)
-				.then(() => console.log("[joinRoom] invoke resolved"))
-				.catch((err) => {
-					console.error("[joinRoom] invoke failed", err);
-					conn.off("JoinSuccess", onSuccess);
-					conn.off("JoinFailed", onFailed);
-					reject(err);
-				});
-		});
-	}
+    async submitAction(roomId: string, actionId: string): Promise<void> {
+        await this.connect();
+        await this.ensureConnection().invoke("SubmitAction", roomId, actionId);
+    }
 
-	async startGame(roomId: string) {
-		await this.connect();
-		await this.ensureConnection().invoke("StartGame", roomId);
-	}
+    async getMyDebrief(roomId: string): Promise<void> {
+        await this.connect();
+        await this.ensureConnection().invoke("GetMyDebrief", roomId);
+    }
 
-	async forceEnd(roomId: string) {
-		await this.connect();
-		await this.ensureConnection().invoke("ForceEndGame", roomId);
-	}
+    // ─────────────────────────────
+    // EVENT SUBSCRIPTIONS
+    // ─────────────────────────────
 
-	// ─────────────────────────────
-	// GAME ACTIONS
-	// ─────────────────────────────
+    on<K extends keyof QuizHubServerEvents>(
+        event: K,
+        cb: (data: QuizHubServerEvents[K]) => void
+    ): void {
+        this.connection?.off(event);
+        this.connection?.on(event, cb);
+    }
 
-	async submitAction(roomId: string, actionId: string) {
-		await this.connect();
-		await this.ensureConnection().invoke("SubmitAction", roomId, actionId);
-	}
+    off<K extends keyof QuizHubServerEvents>(event: K): void {
+        this.connection?.off(event);
+    }
 
-	async getDebrief(roomId: string) {
-		await this.connect();
-		await this.ensureConnection().invoke("GetMyDebrief", roomId);
-	}
+    // ─────────────────────────────
+    // CLEANUP
+    // ─────────────────────────────
 
-	async getGlobalDebrief(roomId: string) {
-		await this.connect();
-		await this.ensureConnection().invoke("GetGlobalDebrief", roomId);
-	}
-
-	on<T>(event: string, cb: (data: T) => void) {
-		this.connection?.off(event);
-		this.connection?.on(event, cb);
-	}
-
-	// ─────────────────────────────
-	// CLEANUP
-	// ─────────────────────────────
-
-	async disconnect() {
-		await this.connection?.stop();
-		this.connection = null;
-	}
+    async disconnect(): Promise<void> {
+        await this.connection?.stop();
+        this.connection = null;
+    }
 }
 
 export const quizSocket = new QuizSocket();

@@ -23,8 +23,12 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
     const connect = useCallback(async () => {
         await quizSocket.connect();
-        setIsConnected(true);
+        setIsConnected(quizSocket.isConnected());
     }, []);
+
+    useEffect(() => {
+        connect().catch(() => setIsConnected(false));
+    }, [connect]);
 
     useEffect(() => {
         connect().catch((err) => {

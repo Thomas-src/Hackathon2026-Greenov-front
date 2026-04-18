@@ -1,42 +1,56 @@
-"use client"
-import {useParams, useRouter} from "next/navigation"
-import QRCode from "react-qr-code"
-import {useWebSocket} from "@/app/providers/WebSocketProvider"
-import {useQuiz} from "@/hooks/useQuiz"
-import {getBaseUrl} from "@/utils/constants"
+"use client";
+
+import { useParams, useRouter } from "next/navigation";
+import QRCode from "react-qr-code";
+import { useWebSocket } from "@/app/providers/WebSocketProvider";
+import { useQuiz } from "@/hooks/useQuiz";
+import { getBaseUrl } from "@/utils/constants";
 
 export default function LobbyPage() {
-    const {sessionId} = useParams<{ sessionId: string }>()
-    const router = useRouter()
-    const {isConnected} = useWebSocket()
-    const {startGame, playersCount} = useQuiz(sessionId)
+    const { sessionId } = useParams<{ sessionId: string }>();
+    const router = useRouter();
+    const { isConnected } = useWebSocket();
+    const { startGame, playersCount } = useQuiz(sessionId);
 
-    const joinUrl = `${getBaseUrl()}/join?game=${sessionId}`
+    const joinUrl = `${getBaseUrl()}/join?game=${sessionId}`;
 
     const handleStart = async () => {
-        await startGame()
-        router.push(`/game/${sessionId}`)
-    }
+        await startGame();
+        router.push(`/game/${sessionId}`);
+    };
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-zinc-900 text-white">
-            <p className="text-zinc-400">{playersCount} joueur{playersCount > 1 ? "s" : ""} connecté{playersCount > 1 ? "s" : ""}</p>
+        <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-4" style={{ background: "var(--background)" }}>
 
-            <div className="bg-white p-4 rounded-2xl">
-                <QRCode value={joinUrl} size={500}/>
+            <div className="text-center">
+                <h1 className="text-4xl font-black" style={{ color: "var(--green)" }}>Jeux'Rénov</h1>
+                <p className="text-sm mt-1" style={{ color: "rgba(232,245,232,0.5)" }}>Scanne le QR code pour rejoindre</p>
             </div>
 
-            <button
-                onClick={handleStart}
-                disabled={playersCount === 0}
-                className="w-80 bg-blue-500 hover:bg-blue-600 p-3 rounded-lg font-semibold disabled:opacity-50"
-            >
-                Démarrer la partie
-            </button>
+            <div className="flex flex-col items-center gap-4 rounded-2xl p-6" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                <div className="rounded-xl overflow-hidden p-3" style={{ background: "white" }}>
+                    <QRCode value={joinUrl} size={280} />
+                </div>
+                <p className="text-sm font-mono px-3 py-2 rounded-lg" style={{ background: "rgba(76,194,74,0.07)", color: "rgba(232,245,232,0.5)", border: "1px solid var(--border)" }}>
+                    {joinUrl}
+                </p>
+            </div>
 
-            <div className="fixed bottom-4 right-4">
-                <div className={`w-4 h-4 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}/>
+            <div className="flex flex-col items-center gap-4 w-full max-w-xs">
+                <div className="w-full flex items-center justify-between rounded-xl px-4 py-3" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                    <span className="text-sm" style={{ color: "rgba(232,245,232,0.5)" }}>Joueurs connectés</span>
+                    <span className="text-2xl font-black" style={{ color: "var(--green)" }}>{playersCount}</span>
+                </div>
+
+                <button onClick={handleStart} disabled={playersCount === 0} className="cool-btn">
+                    {playersCount === 0 ? "En attente de joueurs..." : `Démarrer (${playersCount} joueur${playersCount > 1 ? "s" : ""})`}
+                </button>
+            </div>
+
+            <div className="fixed bottom-4 right-4 flex items-center gap-2">
+                <span className="text-xs" style={{ color: "rgba(232,245,232,0.3)" }}>{isConnected ? "Connecté" : "Déconnecté"}</span>
+                <div className={`w-2 h-2 rounded-full ${isConnected ? "animate-pulse" : ""}`} style={{ background: isConnected ? "var(--green)" : "var(--red)" }} />
             </div>
         </div>
-    )
+    );
 }
