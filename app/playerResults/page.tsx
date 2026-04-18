@@ -23,12 +23,12 @@ export default function PlayerResultPage() {
   const params = useParams();
   const roomId = params.id as string;
 
-  const { debrief, getMyDebrief, isConnected } = useQuiz(roomId);
+  const { debrief, getDebrief, isConnected } = useQuiz(roomId);
 
   useEffect(() => {
     if (!isConnected) return;
-    getMyDebrief();
-  }, [isConnected, getMyDebrief]);
+    getDebrief();
+  }, [isConnected, getDebrief]);
 
   if (!debrief) {
     return (
