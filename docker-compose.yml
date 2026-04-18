@@ -1,0 +1,8 @@
+services:
+
+  app:
+    image: registry.redyd.dev/jeuxrenov-front:latest
+    container_name: jeuxrenov-front
+    restart: unless-stopped
+    ports:
+      - "8081:3000"
