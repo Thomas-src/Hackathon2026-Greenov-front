@@ -14,7 +14,7 @@ import type {
     GlobalDebrief,
     GameStartedHost,
     RoomCreated,
-    PlayerLeft, PlayerSummary,
+    PlayerLeft,
 } from "@/back/types/socket.t";
 
 export function useQuiz(roomId?: string) {
@@ -57,6 +57,7 @@ export function useQuiz(roomId?: string) {
     }, [roomId]);
 
     const submitAction = useCallback(async (actionId: string) => {
+        console.log("[submitAction] roomId:", roomId, "actionId:", actionId);
         if (!roomId) return;
         await quizSocket.submitAction(roomId, actionId);
     }, [roomId]);
@@ -68,11 +69,12 @@ export function useQuiz(roomId?: string) {
 
     // ─────────────────────────────
     // EVENTS BINDING
+    // Enregistré au mount — pas besoin d'attendre isConnected.
+    // Le socket dispatche dès qu'un event arrive, peu importe quand
+    // le handler a été enregistré.
     // ─────────────────────────────
 
     useEffect(() => {
-        if (!isConnected) return;
-
         quizSocket.on("PlayerJoined", (data) => {
             setPlayersCount(data.playerCount);
         });
@@ -89,17 +91,8 @@ export function useQuiz(roomId?: string) {
         quizSocket.on("GameStartedHost", (data: GameStartedHost) => {
             setGameStarted(true);
             setGlobalCarbon(data.globalCarbon);
-
-            const players: PlayerSummary[] = data.players.map((p) => ({
-                connectionId: p.connectionId,
-                username: p.username,
-                profile: p.profile,
-                score: p.score,
-                carbone: p.carbone
-            }));
-            setPlayers(players);
-            setPlayersCount(players.length);
-
+            setPlayers(data.players);
+            setPlayersCount(data.players.length);
             const totalSeconds = data.endsAtUnix - Math.floor(Date.now() / 1000);
             setTimer({ remaining: totalSeconds, total: totalSeconds });
         });
@@ -108,18 +101,18 @@ export function useQuiz(roomId?: string) {
             setGameStarted(true);
         });
 
-        quizSocket.on("NewEvent", (data) => {
+        quizSocket.on("NewEvent", (data: NewEvent) => {
+            console.log("[NewEvent] received id:", data.id, "current:", currentEvent?.id);
             setCurrentEvent(data);
             setWaiting(null);
         });
 
-        quizSocket.on("WaitingForOthers", (data) => {
+        quizSocket.on("WaitingForOthers", (data: WaitingForOthers) => {
             setWaiting(data);
             setCurrentEvent(null);
         });
 
         quizSocket.on("TimerTick", setTimer);
-
         quizSocket.on("ActionFeedback", setFeedback);
 
         quizSocket.on("VillageUpdate", (data: VillageUpdate) => {
@@ -128,9 +121,23 @@ export function useQuiz(roomId?: string) {
         });
 
         quizSocket.on("Debrief", setDebrief);
-
         quizSocket.on("GlobalDebrief", setGlobalDebrief);
-    }, [isConnected]);
+
+        return () => {
+            quizSocket.off("PlayerJoined");
+            quizSocket.off("PlayerLeft");
+            quizSocket.off("JoinSuccess");
+            quizSocket.off("GameStartedHost");
+            quizSocket.off("GameStartedPlayer");
+            quizSocket.off("NewEvent");
+            quizSocket.off("WaitingForOthers");
+            quizSocket.off("TimerTick");
+            quizSocket.off("ActionFeedback");
+            quizSocket.off("VillageUpdate");
+            quizSocket.off("Debrief");
+            quizSocket.off("GlobalDebrief");
+        };
+    }, []);
 
     // ─────────────────────────────
     // RETURN
