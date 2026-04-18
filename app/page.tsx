@@ -6,7 +6,7 @@ export default function Home() {
         <main className="flex flex-col items-center gap-10">
 
           <h1 className="text-4xl font-bold text-center">
-            Jeux'Rénov
+            Jeux&#39;Rénov
           </h1>
 
           <p className="text-zinc-400 text-center max-w-md">
