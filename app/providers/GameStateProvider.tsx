@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { VillageUpdate, TimerTick } from "@/app/types/socket.t";
 
 type Player = {
@@ -19,7 +19,7 @@ type GameStateContextValue = {
     setVillage: (v: VillageUpdate) => void;
     timer: TimerTick | null;
     setTimer: (t: TimerTick) => void;
-    setPlayers: (players: Player[]) => void;
+    setPlayers: React.Dispatch<React.SetStateAction<Player[]>>
 };
 
 const GameStateContext = createContext<GameStateContextValue | null>(null);

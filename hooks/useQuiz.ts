@@ -78,17 +78,27 @@ export function useQuiz(roomId?: string) {
         await quizSocket.getGlobalDebrief(roomId);
     }, [roomId]);
 
+    const onPlayerJoined = (data: PlayerJoined) => {
+        setPlayersCount(data.playerCount);
+    };
+
+    const onPlayerLeft = (data: { username: string; playerCount: number }) => {
+        setPlayersCount(data.playerCount);
+
+        setPlayers(prev =>
+            prev.filter(p => p.username !== data.username)
+        );
+    };
+
     // ─────────────────────────────
     // EVENTS BINDING
     // ─────────────────────────────
 
     useEffect(() => {
         if (!isConnected) return;
+        quizSocket.on<PlayerJoined>("JoinSuccess", onPlayerJoined);
 
-        quizSocket.on<PlayerJoined>("PlayerJoined", (data) => {
-            console.log("Un joueur a rejoint la partie")
-            setPlayersCount(data.playerCount);
-        });
+        quizSocket.on<PlayerJoined>("PlayerJoined", onPlayerJoined);
         quizSocket.on<GameStartedHost>("GameStartedHost", (data) => {
             setGameStarted(true);
 
@@ -127,9 +137,7 @@ export function useQuiz(roomId?: string) {
         quizSocket.on<VillageUpdate>("VillageUpdate", setVillage);
         quizSocket.on<Debrief>("Debrief", setDebrief);
         quizSocket.on<GlobalDebrief>("GlobalDebrief", setGlobalDebrief);
-        quizSocket.on("PlayerLeft", (data: { username: string }) => {
-
-        });
+        quizSocket.on("PlayerLeft", onPlayerLeft);
     }, [isConnected]);
 
     // ─────────────────────────────

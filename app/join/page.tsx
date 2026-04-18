@@ -137,7 +137,7 @@ function JoinContent() {
                         <div className="text-center">
                             <p className="text-lg font-bold">En attente du début...</p>
                             <p className="text-sm mt-1" style={{ color: "rgba(232,245,232,0.5)" }}>
-                                {playersCount ==0 ? 1 : playersCount} joueur{players.length > 1 ? "s" : ""} dans la salle
+                                {playersCount ==0 ? 1 : playersCount} joueur{playersCount > 1 ? "s" : ""} dans la salle
                             </p>
                         </div>
 
