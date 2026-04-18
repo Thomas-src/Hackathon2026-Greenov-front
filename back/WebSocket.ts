@@ -1,9 +1,33 @@
 import * as signalR from "@microsoft/signalr";
-import {BACKEND_URL} from "@/utils/constants";
-import type {JoinFailed, JoinSuccess, QuizHubServerEvents, RoomCreated,} from "@/back/types/socket.t";
+import { BACKEND_URL } from "@/utils/constants";
+import type {
+    JoinFailed,
+    JoinSuccess,
+    QuizHubServerEvents,
+    RoomCreated,
+} from "@/back/types/socket.t";
+
+type Handler<K extends keyof QuizHubServerEvents> = (data: QuizHubServerEvents[K]) => void;
+
+// Events à bufferiser — ceux qui peuvent arriver pendant une transition de page
+const BUFFERED_EVENTS: (keyof QuizHubServerEvents)[] = [
+    "GameStartedPlayer",
+    "GameStartedHost",
+    "NewEvent",
+    "WaitingForOthers",
+    "Debrief",
+    "GlobalDebrief",
+];
 
 class QuizSocket {
     private connection: signalR.HubConnection | null = null;
+    private connectPromise: Promise<void> | null = null;
+
+    private handlers = new Map<keyof QuizHubServerEvents, Handler<any>>();
+
+    // Buffer : stocke le dernier event reçu pour chaque event bufferisé
+    // Rejoué immédiatement quand un handler s'enregistre via on()
+    private buffer = new Map<keyof QuizHubServerEvents, any>();
 
     // ─────────────────────────────
     // CONNECTION
@@ -11,28 +35,28 @@ class QuizSocket {
 
     async connect(): Promise<void> {
         if (this.isConnected()) return;
+        if (this.connectPromise) return this.connectPromise;
 
-        if (this.connection?.state === signalR.HubConnectionState.Connecting) {
-            await new Promise<void>((resolve) => {
-                const interval = setInterval(() => {
-                    if (this.isConnected()) {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, 50);
-            });
-            return;
-        }
+        this.connectPromise = this._doConnect().finally(() => {
+            this.connectPromise = null;
+        });
 
+        return this.connectPromise;
+    }
+
+    private async _doConnect(): Promise<void> {
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(`${BACKEND_URL}/hub`)
             .withAutomaticReconnect()
-            .configureLogging(signalR.LogLevel.Information)
+            .configureLogging(signalR.LogLevel.Warning)
             .build();
 
-        await this.connection.start();
+        this.connection.onreconnected(() => {
+            this.rebindAll();
+        });
 
-        this.registerHandlers();
+        this.bindAll();
+        await this.connection.start();
     }
 
     isConnected(): boolean {
@@ -47,44 +71,80 @@ class QuizSocket {
     }
 
     // ─────────────────────────────
-    // EVENTS REGISTRATION
+    // BINDING INTERNE
     // ─────────────────────────────
 
-    private registerHandlers(): void {
+    private readonly knownEvents: (keyof QuizHubServerEvents)[] = [
+        "RoomCreated",
+        "JoinSuccess",
+        "JoinFailed",
+        "PlayerJoined",
+        "PlayerLeft",
+        "GameStartedHost",
+        "GameStartedPlayer",
+        "NewEvent",
+        "WaitingForOthers",
+        "TimerTick",
+        "ActionFeedback",
+        "VillageUpdate",
+        "Debrief",
+        "GlobalDebrief",
+    ];
+
+    private bindAll(): void {
         if (!this.connection) return;
-
-        const events: (keyof QuizHubServerEvents)[] = [
-            "PlayerJoined",
-            "PlayerLeft",
-            "GameStartedHost",
-            "GameStartedPlayer",
-            "NewEvent",
-            "WaitingForOthers",
-            "TimerTick",
-            "ActionFeedback",
-            "VillageUpdate",
-            "Debrief",
-            "GlobalDebrief",
-        ];
-
-        for (const event of events) {
+        for (const event of this.knownEvents) {
             this.connection.on(event, (data) => {
-                console.log(`[SignalR] ${event}`, data);
+                console.debug(`[SignalR ←] ${event}`, data);
+
+                // Bufferise si c'est un event critique
+                if (BUFFERED_EVENTS.includes(event)) {
+                    this.buffer.set(event, data);
+                }
+
+                this.handlers.get(event)?.(data);
             });
         }
+    }
 
-        this.connection.onclose(() => {
-            console.log("[SignalR] Disconnected");
-        });
+    private rebindAll(): void {
+        if (!this.connection) return;
+        for (const event of this.knownEvents) {
+            this.connection.off(event);
+        }
+        this.bindAll();
+    }
 
-        this.connection.onreconnecting(() => {
-            console.log("[SignalR] Reconnecting...");
-        });
+    // ─────────────────────────────
+    // EVENT SUBSCRIPTIONS
+    // Si un event bufferisé est déjà arrivé, le handler est appelé immédiatement.
+    // ─────────────────────────────
 
-        this.connection.onreconnected(() => {
-            console.log("[SignalR] Reconnected");
-            this.registerHandlers(); // 👈 ré-attache après reconnect
-        });
+    on<K extends keyof QuizHubServerEvents>(
+        event: K,
+        cb: (data: QuizHubServerEvents[K]) => void
+    ): void {
+        this.handlers.set(event, cb as Handler<any>);
+
+        // Replay immédiat si l'event était déjà arrivé avant l'enregistrement
+        if (BUFFERED_EVENTS.includes(event) && this.buffer.has(event)) {
+            console.debug(`[SignalR ↺] replay ${event}`);
+            cb(this.buffer.get(event));
+        }
+    }
+
+    off<K extends keyof QuizHubServerEvents>(event: K): void {
+        this.handlers.delete(event);
+    }
+
+    // Vide le buffer d'un event une fois qu'il a été traité définitivement
+    clearBuffer<K extends keyof QuizHubServerEvents>(event: K): void {
+        this.buffer.delete(event);
+    }
+
+    // Vide tout le buffer (ex: fin de partie, retour au lobby)
+    clearAllBuffers(): void {
+        this.buffer.clear();
     }
 
     // ─────────────────────────────
@@ -97,15 +157,13 @@ class QuizSocket {
         return new Promise<RoomCreated>((resolve, reject) => {
             const conn = this.ensureConnection();
 
-            const onCreated = (data: RoomCreated) => {
-                conn.off("RoomCreated", onCreated);
+            this.handlers.set("RoomCreated", (data: RoomCreated) => {
+                this.handlers.delete("RoomCreated");
                 resolve(data);
-            };
-
-            conn.on("RoomCreated", onCreated);
+            });
 
             conn.invoke("CreateRoom", durationMinutes).catch((err: unknown) => {
-                conn.off("RoomCreated", onCreated);
+                this.handlers.delete("RoomCreated");
                 reject(err);
             });
         });
@@ -131,24 +189,23 @@ class QuizSocket {
         return new Promise<JoinSuccess>((resolve, reject) => {
             const conn = this.ensureConnection();
 
-            const onSuccess = (data: JoinSuccess) => {
-                conn.off("JoinSuccess", onSuccess);
-                conn.off("JoinFailed", onFailed);
+            const cleanup = () => {
+                this.handlers.delete("JoinSuccess");
+                this.handlers.delete("JoinFailed");
+            };
+
+            this.handlers.set("JoinSuccess", (data: JoinSuccess) => {
+                cleanup();
                 resolve(data);
-            };
+            });
 
-            const onFailed = (data: JoinFailed) => {
-                conn.off("JoinSuccess", onSuccess);
-                conn.off("JoinFailed", onFailed);
+            this.handlers.set("JoinFailed", (data: JoinFailed) => {
+                cleanup();
                 reject(new Error(data.message));
-            };
-
-            conn.on("JoinSuccess", onSuccess);
-            conn.on("JoinFailed", onFailed);
+            });
 
             conn.invoke("JoinRoom", roomId, username, profile).catch((err: unknown) => {
-                conn.off("JoinSuccess", onSuccess);
-                conn.off("JoinFailed", onFailed);
+                cleanup();
                 reject(err);
             });
         });
@@ -169,25 +226,12 @@ class QuizSocket {
     }
 
     // ─────────────────────────────
-    // EVENT SUBSCRIPTIONS
-    // ─────────────────────────────
-
-    on<K extends keyof QuizHubServerEvents>(
-        event: K,
-        cb: (data: QuizHubServerEvents[K]) => void
-    ): void {
-        this.connection?.on(event, cb);
-    }
-
-    off<K extends keyof QuizHubServerEvents>(event: K): void {
-        this.connection?.off(event);
-    }
-
-    // ─────────────────────────────
     // CLEANUP
     // ─────────────────────────────
 
     async disconnect(): Promise<void> {
+        this.handlers.clear();
+        this.buffer.clear();
         await this.connection?.stop();
         this.connection = null;
     }
