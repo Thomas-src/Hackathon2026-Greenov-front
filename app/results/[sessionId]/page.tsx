@@ -3,38 +3,14 @@
 import { useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Chart from "chart.js/auto"
+import { useQuiz } from "@/hooks/useQuiz"
+import type { ProfileStats } from "@/back/types/socket.t"
 
-type Profile = "house" | "flat" | "company"
-
-type Player = {
-  profile: Profile
-  score: number
+const PROFILE_CONFIG: Record<string, { label: string; color: string }> = {
+  proprietaire: { label: "Propriétaire", color: "#60a5fa" },
+  locataire:    { label: "Locataire",    color: "#a8e063" },
+  entreprise:   { label: "Entreprise",   color: "#fb923c" },
 }
-
-const PROFILE_CONFIG: Record<Profile, { label: string; color: string }> = {
-  house:   { label: "Maison",      color: "#60a5fa" },
-  flat:    { label: "Appartement", color: "#34d399" },
-  company: { label: "Entreprise",  color: "#fb923c" },
-}
-
-function totalByProfile(players: Player[]) {
-  return (Object.keys(PROFILE_CONFIG) as Profile[]).map((profile) => {
-    const group = players.filter((p) => p.profile === profile)
-    const total = group.reduce((s, p) => s + p.score, 0)
-    return { profile, total, count: group.length }
-  })
-}
-
-const MOCK_PLAYERS: Player[] = [
-  { profile: "house",   score: 12 },
-  { profile: "house",   score: 74 },
-  { profile: "house",   score: 69 },
-  { profile: "flat",    score: 67 },
-  { profile: "flat",    score: 58 },
-  { profile: "flat",    score: 77 },
-  { profile: "company", score: 91 },
-  { profile: "company", score: 43 },
-]
 
 export default function ResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
@@ -42,20 +18,23 @@ export default function ResultsPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const chartRef = useRef<Chart | null>(null)
 
-  const stats = totalByProfile(MOCK_PLAYERS)
-  const totalScore = MOCK_PLAYERS.reduce((s, p) => s + p.score, 0)
+  const { globalDebrief } = useQuiz(sessionId)
+
+  const stats = globalDebrief?.statsByProfile ?? []
+  const totalScore = globalDebrief?.leaderboard.reduce((s, p) => s + p.score, 0) ?? 0
+  const playerCount = globalDebrief?.leaderboard.length ?? 0
 
   useEffect(() => {
-    if (!canvasRef.current) return
+    if (!canvasRef.current || stats.length === 0) return
     chartRef.current?.destroy()
 
     chartRef.current = new Chart(canvasRef.current, {
       type: "bar",
       data: {
-        labels: stats.map((s) => PROFILE_CONFIG[s.profile].label),
+        labels: stats.map((s) => PROFILE_CONFIG[s.profile]?.label ?? s.profile),
         datasets: [{
-          data: stats.map((s) => s.total),
-          backgroundColor: stats.map((s) => PROFILE_CONFIG[s.profile].color),
+          data: stats.map((s) => Math.round(s.avgScore * s.playerCount)),
+          backgroundColor: stats.map((s) => PROFILE_CONFIG[s.profile]?.color ?? "#888"),
           borderRadius: 8,
           borderSkipped: false,
         }],
@@ -66,14 +45,14 @@ export default function ResultsPage() {
         plugins: { legend: { display: false } },
         scales: {
           x: {
-            ticks: { color: "#71717a" },
+            ticks: { color: "rgba(232,245,232,0.4)" },
             grid: { display: false },
             border: { display: false },
           },
           y: {
             beginAtZero: true,
-            ticks: { color: "#71717a", callback: (v) => v + " pts" },
-            grid: { color: "rgba(113,113,122,0.15)" },
+            ticks: { color: "rgba(232,245,232,0.4)", callback: (v) => v + " pts" },
+            grid: { color: "rgba(76,194,74,0.08)" },
             border: { display: false },
           },
         },
@@ -83,49 +62,70 @@ export default function ResultsPage() {
     return () => chartRef.current?.destroy()
   }, [stats])
 
+  if (!globalDebrief) {
+    return (
+      <main className="min-h-screen flex items-center justify-center" style={{ background: "var(--background)" }}>
+        <p className="text-lg font-semibold animate-pulse" style={{ color: "rgba(232,245,232,0.5)" }}>
+          Chargement du bilan...
+        </p>
+      </main>
+    )
+  }
+
   return (
-    <main className="min-h-screen bg-zinc-900 text-white p-6">
+    <main className="min-h-screen p-4 text-white" style={{ background: "var(--background)" }}>
       <div className="mx-auto max-w-7xl space-y-6">
 
-        {/* Score ville — centré, grand */}
         <div className="text-center space-y-1">
-          <p className="text-sm text-zinc-500">Session {sessionId}</p>
-          <p className="text-zinc-400 text-base">Score total de la ville</p>
-          <p className="text-7xl font-bold">{totalScore}</p>
-          <p className="text-zinc-500 text-sm">{MOCK_PLAYERS.length} joueurs</p>
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(232,245,232,0.4)" }}>
+            Session {sessionId}
+          </p>
+          <p className="text-sm" style={{ color: "rgba(232,245,232,0.5)" }}>Score total de la ville</p>
+          <p className="text-7xl font-black" style={{ color: "var(--green)" }}>{totalScore}</p>
+          <p className="text-sm" style={{ color: "rgba(232,245,232,0.4)" }}>
+            {playerCount} joueur{playerCount > 1 ? "s" : ""}
+          </p>
         </div>
 
-        {/* Contenu */}
         <div className="flex gap-6">
 
           <aside className="w-64 space-y-3">
-            <h2 className="text-sm text-zinc-400 uppercase tracking-wider">Par profil</h2>
-            {stats.map(({ profile, total, count }) => (
-              <div key={profile} className="rounded-xl bg-zinc-800 p-4">
-                <div className="flex justify-between items-baseline mb-1">
-                  <p className="text-sm text-zinc-400">{PROFILE_CONFIG[profile].label}</p>
-                  <p className="text-xs text-zinc-600">{count} joueur{count > 1 ? "s" : ""}</p>
+            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(232,245,232,0.4)" }}>
+              Par profil
+            </h2>
+            {stats.map((s: ProfileStats) => {
+              const total = Math.round(s.avgScore * s.playerCount)
+              const config = PROFILE_CONFIG[s.profile]
+              return (
+                <div key={s.profile} className="rounded-2xl p-4" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                  <div className="flex justify-between items-baseline mb-1">
+                    <p className="text-sm" style={{ color: "rgba(232,245,232,0.5)" }}>{config?.label ?? s.profile}</p>
+                    <p className="text-xs" style={{ color: "rgba(232,245,232,0.3)" }}>
+                      {s.playerCount} joueur{s.playerCount > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-black" style={{ color: config?.color }}>
+                    {total} pts
+                  </p>
                 </div>
-                <p className="text-2xl font-bold" style={{ color: PROFILE_CONFIG[profile].color }}>
-                  {total} pts
-                </p>
-              </div>
-            ))}
+              )
+            })}
 
             <button
               onClick={() => router.push("/")}
-              className="w-full rounded-xl bg-zinc-800 p-3 text-sm text-zinc-300 hover:bg-zinc-700 transition-colors"
+              className="w-full rounded-xl p-3 text-sm transition-colors"
+              style={{ background: "var(--card)", border: "1px solid var(--border)", color: "rgba(232,245,232,0.5)" }}
             >
               ← Retour à l'accueil
             </button>
           </aside>
 
-          <section className="flex-1 rounded-xl bg-zinc-800 p-4">
+          <section className="flex-1 rounded-2xl p-5" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
             <div className="flex gap-4 mb-4">
-              {stats.map(({ profile }) => (
-                <span key={profile} className="flex items-center gap-2 text-xs text-zinc-400">
-                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: PROFILE_CONFIG[profile].color }} />
-                  {PROFILE_CONFIG[profile].label}
+              {stats.map((s: ProfileStats) => (
+                <span key={s.profile} className="flex items-center gap-2 text-xs" style={{ color: "rgba(232,245,232,0.5)" }}>
+                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: PROFILE_CONFIG[s.profile]?.color }} />
+                  {PROFILE_CONFIG[s.profile]?.label ?? s.profile}
                 </span>
               ))}
             </div>
