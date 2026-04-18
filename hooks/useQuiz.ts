@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { quizSocket } from "@/back/WebSocket";
 import { useWebSocket } from "@/app/providers/WebSocketProvider";
+import { useGameState } from "@/app/providers/GameStateProvider";
 
 import type {
     PlayerJoined,
@@ -18,24 +19,17 @@ import type {
 
 export function useQuiz(roomId?: string) {
     const { isConnected } = useWebSocket();
+    const { playersCount, setPlayersCount, village, setVillage, timer, setTimer } = useGameState();
 
     // ─────────────────────────────
-    // STATE GAME
+    // STATE GAME (local uniquement)
     // ─────────────────────────────
-
-    const [playersCount, setPlayersCount] = useState(0);
 
     const [currentEvent, setCurrentEvent] = useState<NewEvent | null>(null);
     const [waiting, setWaiting] = useState<WaitingForOthers | null>(null);
-
-    const [timer, setTimer] = useState<TimerTick | null>(null);
     const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
-
-    const [village, setVillage] = useState<VillageUpdate | null>(null);
-
     const [debrief, setDebrief] = useState<Debrief | null>(null);
     const [globalDebrief, setGlobalDebrief] = useState<GlobalDebrief | null>(null);
-
     const [gameStarted, setGameStarted] = useState(false);
 
     // ─────────────────────────────
@@ -86,14 +80,15 @@ export function useQuiz(roomId?: string) {
     // EVENTS BINDING
     // ─────────────────────────────
 
-    // Retire simplement le return avec disconnect
     useEffect(() => {
         if (!isConnected) return;
 
         quizSocket.on<PlayerJoined>("PlayerJoined", (data) => {
             setPlayersCount(data.playerCount);
         });
-        quizSocket.on<GameStarted>("GameStarted", () => {});
+        quizSocket.on<GameStarted>("GameStarted", () => {
+            setGameStarted(true);
+        });
         quizSocket.on<NewEvent>("NewEvent", (data) => {
             setCurrentEvent(data);
             setWaiting(null);
@@ -114,7 +109,6 @@ export function useQuiz(roomId?: string) {
     // ─────────────────────────────
 
     return {
-        // state
         isConnected,
         playersCount,
         currentEvent,
@@ -126,13 +120,12 @@ export function useQuiz(roomId?: string) {
         globalDebrief,
         gameStarted,
 
-        // actions
         joinRoom,
         submitAction,
         startGame,
         forceEnd,
         getDebrief,
         getGlobalDebrief,
-        createRoom
+        createRoom,
     };
 }
