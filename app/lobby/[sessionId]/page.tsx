@@ -2,18 +2,18 @@
 import { useParams, useRouter } from "next/navigation"
 import QRCode from "react-qr-code"
 import {useWebSocket} from "@/app/providers/WebSocketProvider";
-
+import {getBaseUrl} from "@/utils/constants"
 export default function LobbyPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const router = useRouter()
     const { isConnected } = useWebSocket();
-  const joinUrl = `http://jeurenov.tomstudio.eu/join/${sessionId}`
+  const joinUrl = `${getBaseUrl()}/join?game=${sessionId}`
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-zinc-900">
-      <div className="bg-white p-4 rounded-2xl">
+      <a href={joinUrl} className="bg-white p-4 rounded-2xl">
         <QRCode value={joinUrl} size={500} />
-      </div>
+      </a>
       <button
         onClick={() => router.push(`/game/${sessionId}`)}
         className="w-80 bg-blue-500 hover:bg-blue-600 p-3 rounded-lg text-white font-semibold"

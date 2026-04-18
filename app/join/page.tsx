@@ -72,7 +72,7 @@ function generatePositions(count: number, size: number) {
 
 export default function JoinPage() {
     const searchParams = useSearchParams();
-    const sessionIdFromUrl = searchParams.get("sessionId");
+    const sessionIdFromUrl = searchParams.get("game");
 
     const [sessionId, setSessionId] = useState(sessionIdFromUrl || "");
     const [name, setName] = useState("");
@@ -131,7 +131,7 @@ export default function JoinPage() {
                                 value={sessionId}
                                 onChange={(e) => setSessionId(e.target.value)}
                                 placeholder="ID session"
-                                className="w-full p-3 rounded-lg text-black"
+                                className="w-full p-3 rounded-lg"
                             />
                         )}
 
@@ -139,15 +139,15 @@ export default function JoinPage() {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Pseudo"
-                            className="w-full p-3 rounded-lg text-black"
+                            className="w-full p-3 rounded-lg "
                         />
 
                         <select
                             value={profile}
                             onChange={(e) => setProfile(e.target.value as Profile)}
-                            className="w-full p-3 rounded-lg text-black"
+                            className="w-full p-3 rounded-lg "
                         >
-                            <option value="house">Maison</option>
+                            <option value="house" className="text-black">Maison</option>
                             <option value="flat">Appartement</option>
                             <option value="company">Entreprise</option>
                         </select>
