@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {Suspense, useEffect, useState} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useWebSocket } from "@/app/providers/WebSocketProvider";
 import { useQuiz } from "@/hooks/useQuiz";
@@ -60,6 +60,14 @@ function House({ src, x, y, isMe, scale }: {
 }
 
 export default function JoinPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <JoinContent />
+        </Suspense>
+    );
+}
+
+function JoinContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const roomIdFromUrl = searchParams.get("game");
