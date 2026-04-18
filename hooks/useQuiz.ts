@@ -163,7 +163,7 @@ export function useQuiz(roomId?: string) {
             quizSocket.off("Debrief");
             quizSocket.off("GlobalDebrief");
         };
-    }, []);
+    }, [isConnected]); // PAS DE TABLEAU VIDE BANDE DE NEUILLES
 
     // ─────────────────────────────
     // RETURN
