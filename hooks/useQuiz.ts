@@ -16,6 +16,7 @@ import type {
     Debrief,
     GlobalDebrief, GameStartedHost, GameStartedPlayer,
 } from "@/app/types/socket.t";
+import {Player} from "@/back/domain/Player";
 
 export function useQuiz(roomId?: string) {
     const { isConnected } = useWebSocket();
@@ -31,6 +32,7 @@ export function useQuiz(roomId?: string) {
     const [debrief, setDebrief] = useState<Debrief | null>(null);
     const [globalDebrief, setGlobalDebrief] = useState<GlobalDebrief | null>(null);
     const [gameStarted, setGameStarted] = useState(false);
+    const [globalCarbon, setGlobalCarbon] = useState(0);
 
     // ─────────────────────────────
     // ACTIONS
@@ -84,6 +86,7 @@ export function useQuiz(roomId?: string) {
         if (!isConnected) return;
 
         quizSocket.on<PlayerJoined>("PlayerJoined", (data) => {
+            console.log("Un joueur a rejoint la partie")
             setPlayersCount(data.playerCount);
         });
         quizSocket.on<GameStartedHost>("GameStartedHost", (data) => {
@@ -93,9 +96,10 @@ export function useQuiz(roomId?: string) {
                 remaining: data.remaining,
                 total: data.remaining,
             });
+            setGlobalCarbon(data.carbon);
 
             if (data.players) {
-                const players = data.players.map((p) => ({
+                const players  = data.players.map((p) => ({
                     username: p.username,
                     profile: p.profile,
                     score: p.score,
@@ -123,6 +127,9 @@ export function useQuiz(roomId?: string) {
         quizSocket.on<VillageUpdate>("VillageUpdate", setVillage);
         quizSocket.on<Debrief>("Debrief", setDebrief);
         quizSocket.on<GlobalDebrief>("GlobalDebrief", setGlobalDebrief);
+        quizSocket.on("PlayerLeft", (data: { username: string }) => {
+
+        });
     }, [isConnected]);
 
     // ─────────────────────────────
