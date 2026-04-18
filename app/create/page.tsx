@@ -3,7 +3,7 @@
 import {useState} from "react";
 import {useRouter} from "next/navigation";
 import {useWebSocket} from "@/app/providers/WebSocketProvider";
-import {useQuiz} from "@/app/hooks/useQuiz";
+import {useQuiz} from "@/hooks/useQuiz";
 
 export default function CreatePage() {
     const [duration, setDuration] = useState(10);

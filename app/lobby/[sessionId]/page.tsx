@@ -2,7 +2,7 @@
 import {useParams, useRouter} from "next/navigation"
 import QRCode from "react-qr-code"
 import {useWebSocket} from "@/app/providers/WebSocketProvider"
-import {useQuiz} from "@/app/hooks/useQuiz"
+import {useQuiz} from "@/hooks/useQuiz"
 import {getBaseUrl} from "@/utils/constants"
 
 export default function LobbyPage() {
@@ -22,9 +22,9 @@ export default function LobbyPage() {
         <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-zinc-900 text-white">
             <p className="text-zinc-400">{playersCount} joueur{playersCount > 1 ? "s" : ""} connecté{playersCount > 1 ? "s" : ""}</p>
 
-            <a href={joinUrl} className="bg-white p-4 rounded-2xl">
+            <div className="bg-white p-4 rounded-2xl">
                 <QRCode value={joinUrl} size={500}/>
-            </a>
+            </div>
 
             <button
                 onClick={handleStart}
