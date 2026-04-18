@@ -55,7 +55,7 @@ export default function CreatePage() {
 
                 <button
                     onClick={handleCreate}
-                    disabled={duration <= 0 || isCreating || !isConnected}
+                    disabled={duration <= 0 || isCreating}
                     className="cursor-pointer w-full bg-blue-500 hover:bg-blue-600 p-3 rounded-lg disabled:opacity-50"
                 >
                     {isCreating ? "Création..." : "Créer"}
