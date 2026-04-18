@@ -86,33 +86,27 @@ export function useQuiz(roomId?: string) {
     // EVENTS BINDING
     // ─────────────────────────────
 
+    // Retire simplement le return avec disconnect
     useEffect(() => {
         if (!isConnected) return;
 
         quizSocket.on<PlayerJoined>("PlayerJoined", (data) => {
             setPlayersCount(data.playerCount);
         });
-
+        quizSocket.on<GameStarted>("GameStarted", () => {});
         quizSocket.on<NewEvent>("NewEvent", (data) => {
             setCurrentEvent(data);
             setWaiting(null);
         });
-
         quizSocket.on<WaitingForOthers>("WaitingForOthers", (data) => {
             setWaiting(data);
             setCurrentEvent(null);
         });
-
         quizSocket.on<TimerTick>("TimerTick", setTimer);
         quizSocket.on<ActionFeedback>("ActionFeedback", setFeedback);
         quizSocket.on<VillageUpdate>("VillageUpdate", setVillage);
         quizSocket.on<Debrief>("Debrief", setDebrief);
         quizSocket.on<GlobalDebrief>("GlobalDebrief", setGlobalDebrief);
-
-        quizSocket.on<GameStarted>("GameStarted", () => {
-            setGameStarted(true);
-        });
-
     }, [isConnected]);
 
     // ─────────────────────────────
