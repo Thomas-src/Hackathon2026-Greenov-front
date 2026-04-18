@@ -1,32 +1,23 @@
 "use client";
 
-import {useState} from "react";
-import {useRouter} from "next/navigation";
-import {useWebSocket} from "@/app/providers/WebSocketProvider";
-import {useQuiz} from "@/hooks/useQuiz";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useWebSocket } from "@/app/providers/WebSocketProvider";
+import { useQuiz } from "@/hooks/useQuiz";
 
 export default function CreatePage() {
     const [duration, setDuration] = useState(10);
     const [isCreating, setIsCreating] = useState(false);
-
     const router = useRouter();
-
-    const {isConnected} = useWebSocket();
-    const {createRoom} = useQuiz(); // important
+    const { isConnected } = useWebSocket();
+    const { createRoom } = useQuiz();
 
     const handleCreate = async () => {
         if (duration <= 0) return;
-
         setIsCreating(true);
-
         try {
             const roomId = await createRoom(duration);
-
-            if (!roomId) {
-                console.warn("Room ID does not exist!");
-                return;
-            }
-
+            if (!roomId) { console.warn("Room ID does not exist!"); return; }
             router.push(`/lobby/${encodeURIComponent(roomId)}`);
         } catch (err) {
             console.error("Erreur création room", err);
@@ -36,40 +27,41 @@ export default function CreatePage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-900 text-white">
-            <div className="flex flex-col gap-6 w-80">
+        <div className="flex min-h-screen items-center justify-center p-4" style={{ background: "var(--background)" }}>
+            <div className="w-full max-w-sm flex flex-col gap-6">
 
-                <h1 className="text-2xl font-bold text-center">
-                    Créer une partie
-                </h1>
+                <div className="text-center">
+                    <h1 className="text-4xl font-black" style={{ color: "var(--green)" }}>Jeux'Rénov</h1>
+                    <p className="text-sm mt-1" style={{ color: "rgba(232,245,232,0.5)" }}>Créer une nouvelle partie</p>
+                </div>
 
-                <label htmlFor="time">Durée (min)</label>
-                <input
-                    id="time"
-                    type="number"
-                    value={duration}
-                    onChange={(e) => setDuration(Number(e.target.value))}
-                    className="w-full p-3 rounded-lg text-white border border-zinc-700 bg-zinc-800"
-                    placeholder="Durée (minutes)"
-                />
+                <div className="flex flex-col gap-5 rounded-2xl p-6" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                    <h2 className="text-xl font-bold text-center">Paramètres</h2>
 
-                <button
-                    onClick={handleCreate}
-                    disabled={duration <= 0 || isCreating}
-                    className="cursor-pointer w-full bg-blue-500 hover:bg-blue-600 p-3 rounded-lg disabled:opacity-50"
-                >
-                    {isCreating ? "Création..." : "Créer"}
-                </button>
+                    <div className="flex flex-col gap-1">
+                        <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "rgba(232,245,232,0.4)" }}>
+                            Durée (minutes)
+                        </label>
+                        <input
+                            type="number"
+                            value={duration}
+                            onChange={(e) => setDuration(Number(e.target.value))}
+                            className="cool-input"
+                            placeholder="Ex: 10"
+                            min={1}
+                        />
+                    </div>
+
+                    <button onClick={handleCreate} disabled={duration <= 0 || isCreating} className="cool-btn">
+                        {isCreating ? "Création..." : "Créer la partie →"}
+                    </button>
+                </div>
+
             </div>
 
-            {/* status */}
-            <div className="fixed bottom-4 right-4">
-                <div
-                    className={`w-4 h-4 rounded-full ${
-                        isConnected ? "bg-green-500" : "bg-red-500"
-                    }`}
-                    title={isConnected ? "WebSocket connecté" : "WebSocket déconnecté"}
-                />
+            <div className="fixed bottom-4 right-4 flex items-center gap-2">
+                <span className="text-xs" style={{ color: "rgba(232,245,232,0.3)" }}>{isConnected ? "Connecté" : "Déconnecté"}</span>
+                <div className={`w-2 h-2 rounded-full ${isConnected ? "animate-pulse" : ""}`} style={{ background: isConnected ? "var(--green)" : "var(--red)" }} />
             </div>
         </div>
     );

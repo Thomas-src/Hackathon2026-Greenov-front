@@ -2,31 +2,27 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-900 text-white">
+      <div className="flex min-h-screen items-center justify-center p-4" style={{ background: "var(--background)" }}>
         <main className="flex flex-col items-center gap-10">
 
-          <h1 className="text-4xl font-bold text-center">
-            Jeux&#39;Rénov
-          </h1>
+          <div className="text-center">
+            <h1 className="text-5xl font-black tracking-tight" style={{ color: "var(--green)" }}>
+              Jeux'Rénov
+            </h1>
+            <p className="mt-3 text-sm max-w-md" style={{ color: "rgba(232,245,232,0.5)" }}>
+              Jeu interactif "Parcours Zéro Implication - Zéro Émission" : comprendre, décider, transformer
+            </p>
+          </div>
 
-          <p className="text-zinc-400 text-center max-w-md">
-            Jeu interactif “Parcours Zéro implication - Zéro Émission” : comprendre, décider, transformer
-          </p>
-
-          <div className="flex flex-col gap-4 w-64">
-
+          <div className="flex flex-col gap-4 w-72">
             <Link href="/create">
-              <button className="w-full cursor-pointer bg-green-500 hover:bg-green-600 transition p-4 rounded-xl text-lg font-semibold">
-                Créer une partie
-              </button>
+              <button className="cool-btn">Créer une partie</button>
             </Link>
-
             <Link href="/join">
-              <button className="w-full cursor-pointer bg-blue-500 hover:bg-blue-600 transition p-4 rounded-xl text-lg font-semibold">
+              <button className="cool-btn" style={{ background: "var(--card)", color: "var(--green)", boxShadow: "0 4px 0 rgba(0,0,0,0.4)", border: "1px solid var(--border-strong)" }}>
                 Rejoindre une partie
               </button>
             </Link>
-
           </div>
 
         </main>
