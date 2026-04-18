@@ -17,7 +17,6 @@ export default function CreatePage() {
         setIsCreating(true);
         try {
             const roomCreated = await createRoom(duration);
-            console.log("HERE BROOO " + JSON.stringify(roomCreated));
             if (!roomCreated) { console.warn("Room ID does not exist!"); return; }
             router.push(`/lobby/${roomCreated.roomId}`);
         } catch (err) {

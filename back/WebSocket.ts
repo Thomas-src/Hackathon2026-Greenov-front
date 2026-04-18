@@ -27,10 +27,12 @@ class QuizSocket {
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(`${BACKEND_URL}/hub`)
             .withAutomaticReconnect()
+            .configureLogging(signalR.LogLevel.Information)
             .build();
 
-        this.registerHandlers();
         await this.connection.start();
+
+        this.registerHandlers();
     }
 
     isConnected(): boolean {
@@ -51,38 +53,37 @@ class QuizSocket {
     private registerHandlers(): void {
         if (!this.connection) return;
 
-        this.connection.on("PlayerJoined", (data: QuizHubServerEvents["PlayerJoined"]) => {
-            console.log("PlayerJoined", data);
+        const events: (keyof QuizHubServerEvents)[] = [
+            "PlayerJoined",
+            "PlayerLeft",
+            "GameStartedHost",
+            "GameStartedPlayer",
+            "NewEvent",
+            "WaitingForOthers",
+            "TimerTick",
+            "ActionFeedback",
+            "VillageUpdate",
+            "Debrief",
+            "GlobalDebrief",
+        ];
+
+        for (const event of events) {
+            this.connection.on(event, (data) => {
+                console.log(`[SignalR] ${event}`, data);
+            });
+        }
+
+        this.connection.onclose(() => {
+            console.log("[SignalR] Disconnected");
         });
-        this.connection.on("PlayerLeft", (data: QuizHubServerEvents["PlayerLeft"]) => {
-            console.log("PlayerLeft", data);
+
+        this.connection.onreconnecting(() => {
+            console.log("[SignalR] Reconnecting...");
         });
-        this.connection.on("GameStartedHost", (data: QuizHubServerEvents["GameStartedHost"]) => {
-            console.log("GameStartedHost", data);
-        });
-        this.connection.on("GameStartedPlayer", (data: QuizHubServerEvents["GameStartedPlayer"]) => {
-            console.log("GameStartedPlayer", data);
-        });
-        this.connection.on("NewEvent", (data: QuizHubServerEvents["NewEvent"]) => {
-            console.log("NewEvent", data);
-        });
-        this.connection.on("WaitingForOthers", (data: QuizHubServerEvents["WaitingForOthers"]) => {
-            console.log("WaitingForOthers", data);
-        });
-        this.connection.on("TimerTick", (data: QuizHubServerEvents["TimerTick"]) => {
-            console.log("TimerTick", data);
-        });
-        this.connection.on("ActionFeedback", (data: QuizHubServerEvents["ActionFeedback"]) => {
-            console.log("ActionFeedback", data);
-        });
-        this.connection.on("VillageUpdate", (data: QuizHubServerEvents["VillageUpdate"]) => {
-            console.log("VillageUpdate", data);
-        });
-        this.connection.on("Debrief", (data: QuizHubServerEvents["Debrief"]) => {
-            console.log("Debrief", data);
-        });
-        this.connection.on("GlobalDebrief", (data: QuizHubServerEvents["GlobalDebrief"]) => {
-            console.log("GlobalDebrief", data);
+
+        this.connection.onreconnected(() => {
+            console.log("[SignalR] Reconnected");
+            this.registerHandlers(); // 👈 ré-attache après reconnect
         });
     }
 
@@ -175,7 +176,6 @@ class QuizSocket {
         event: K,
         cb: (data: QuizHubServerEvents[K]) => void
     ): void {
-        this.connection?.off(event);
         this.connection?.on(event, cb);
     }
 
