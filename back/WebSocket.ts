@@ -92,7 +92,22 @@ class QuizSocket {
 
     async createRoom(durationMinutes: number): Promise<RoomCreated> {
         await this.connect();
-        return this.ensureConnection().invoke<RoomCreated>("CreateRoom", durationMinutes);
+
+        return new Promise<RoomCreated>((resolve, reject) => {
+            const conn = this.ensureConnection();
+
+            const onCreated = (data: RoomCreated) => {
+                conn.off("RoomCreated", onCreated);
+                resolve(data);
+            };
+
+            conn.on("RoomCreated", onCreated);
+
+            conn.invoke("CreateRoom", durationMinutes).catch((err: unknown) => {
+                conn.off("RoomCreated", onCreated);
+                reject(err);
+            });
+        });
     }
 
     async startGame(roomId: string): Promise<void> {
