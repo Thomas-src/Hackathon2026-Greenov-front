@@ -44,9 +44,11 @@ export function useQuiz(roomId?: string) {
         return c;
     }, []);
 
-    const joinRoom = useCallback(async (username: string, profile: string) => {
-        if (!IdRoom) return;
-        await quizSocket.joinRoom(IdRoom, username, profile);
+    const joinRoom = useCallback(async (username: string, profile: string, targetRoomId?: string) => {
+        const room = targetRoomId ?? IdRoom;
+        if (!room) return;
+        if (!IdRoom) setRoomId(room);
+        await quizSocket.joinRoom(room, username, profile);
     }, [IdRoom]);
 
     const startGame = useCallback(async () => {
