@@ -252,7 +252,7 @@ export function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
                             }}
                         >
                             {players.map((p, i) => (
-                                <House key={i} src={`/square/square${p.profile.image}.gif`}/>
+                                <House key={i} src={`/square/square${p.profile.image.toLowerCase()}.gif`}/>
                             ))}
                         </div>
 
