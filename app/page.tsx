@@ -80,7 +80,7 @@ export default function Home() {
             >
                 {/* Title */}
                 <div className="text-center">
-                    <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Jeux&#39;Rénov</h1>
+                    <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Greenov</h1>
                     <p style={{
                         marginTop: 10,
                         fontSize: 13,

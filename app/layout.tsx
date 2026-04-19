@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Jeux'Rénov",
+    title: "Greenov",
     description: "Objetif rénovation, le tout de manière écolo",
 };
 

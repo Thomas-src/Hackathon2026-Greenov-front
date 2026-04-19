@@ -179,7 +179,7 @@ export function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
             <div className="flex flex-col items-center gap-6 w-full max-w-sm">
 
                 <div className="text-center">
-                    <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Jeux'Rénov</h1>
+                    <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Greenov</h1>
                     <p className="text-sm mt-1" style={{color: "rgba(232,245,232,0.5)"}}>Le quiz sur la transition
                         écologique</p>
                 </div>

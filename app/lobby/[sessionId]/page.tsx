@@ -24,7 +24,7 @@ export default function LobbyPage() {
              style={{background: "var(--background)"}}>
 
             <div className="text-center">
-                <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Jeux'Rénov</h1>
+                <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Greenov</h1>
                 <p className="text-sm mt-1" style={{color: "rgba(232,245,232,0.5)"}}>Scanne le QR code pour
                     rejoindre</p>
             </div>

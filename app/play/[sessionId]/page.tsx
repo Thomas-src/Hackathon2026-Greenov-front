@@ -599,7 +599,7 @@ export default function PlayPage() {
                 <div className="flex items-center gap-2">
                     <span className="text-[#4ade80]">🌿</span>
                     <span
-                        className="font-mono text-xs text-[#3d5c45] uppercase tracking-widest hidden sm:block">Jeux'Rénov</span>
+                        className="font-mono text-xs text-[#3d5c45] uppercase tracking-widest hidden sm:block">Greenov</span>
                     <span className="font-mono text-xs text-[#2e4a35]">· {sessionId}</span>
                 </div>
                 <div className="flex items-center gap-2">

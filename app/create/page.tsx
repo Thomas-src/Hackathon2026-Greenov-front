@@ -34,7 +34,7 @@ export default function CreatePage() {
             <div className="w-full max-w-sm flex flex-col gap-6">
 
                 <div className="text-center">
-                    <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Jeux&#39;Rénov</h1>
+                    <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Greenov</h1>
                     <p className="text-sm mt-1" style={{color: "rgba(232,245,232,0.5)"}}>Créer une nouvelle partie</p>
                 </div>
 
