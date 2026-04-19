@@ -28,11 +28,10 @@ export default function LobbyPage() {
                 <p className="text-sm mt-1" style={{color: "rgba(232,245,232,0.5)"}}>Scanne le QR code pour
                     rejoindre</p>
             </div>
-
             <div className="flex flex-col items-center gap-4 rounded-2xl p-6"
                  style={{background: "var(--card)", border: "1px solid var(--border)"}}>
                 <div className="rounded-xl overflow-hidden p-3" style={{background: "white"}}>
-                    <QRCode value={joinUrl} size={280}/>
+                    <QRCode value={joinUrl} size={350}/>
                 </div>
                 <p className="text-sm font-mono px-3 py-2 rounded-lg" style={{
                     background: "rgba(76,194,74,0.07)",
@@ -43,6 +42,7 @@ export default function LobbyPage() {
                 </p>
             </div>
 
+            <div className="absolute bottom-5 right-5">
             <div className="flex flex-col items-center gap-4 w-full max-w-xs">
                 <div className="w-full flex items-center justify-between rounded-xl px-4 py-3"
                      style={{background: "var(--card)", border: "1px solid var(--border)"}}>
@@ -55,7 +55,9 @@ export default function LobbyPage() {
                 </button>
             </div>
 
-            <div className="fixed bottom-4 right-4 flex items-center gap-2">
+            </div>
+
+            <div className="fixed top-4 left-4 flex items-center gap-2">
                 <span className="text-xs"
                       style={{color: "rgba(232,245,232,0.3)"}}>{isConnected ? "Connecté" : "Déconnecté"}</span>
                 <div className={`w-2 h-2 rounded-full ${isConnected ? "animate-pulse" : ""}`}
