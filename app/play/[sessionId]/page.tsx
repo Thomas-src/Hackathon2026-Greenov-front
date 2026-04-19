@@ -24,6 +24,15 @@ const PROFILE_TO_SUFFIX: Record<Profile, string> = {
     entreprise: "Company",
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+    const copy = [...array];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
 const STATE_GIF: Record<number, { folder: string; prefix: string }> = {
     0: {folder: "houses", prefix: ""},
     1: {folder: "snow", prefix: "snow"},
@@ -373,12 +382,15 @@ function EventPanel({
     const [isPending, setIsPending] = useState(false)
     const [submittedId, setSubmittedId] = useState<string | null>(null)
     const issueType = parseIssueType(event.type)
-
+    const [shuffledActions, setShuffledActions] = useState(event.actions);
     useEffect(() => {
         setSelectedId(null)
         setIsPending(false)
+        setShuffledActions(shuffleArray(event.actions));
         setSubmittedId(null)
     }, [event.id])
+
+
 
     useEffect(() => {
         if (lastFeedback && isPending && selectedId) {
@@ -433,7 +445,7 @@ function EventPanel({
 
             {/* Choices */}
             <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
-                {event.actions.map((action, i) => {
+                {shuffledActions.map((action, i) => {
                     const s = ACTION_STYLES[i % ACTION_STYLES.length]
                     const isSelected = selectedId === action.id
                     const isSubmitted = submittedId === action.id
