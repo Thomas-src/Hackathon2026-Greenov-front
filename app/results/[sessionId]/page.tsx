@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import Chart from "chart.js/auto"
 import { useQuiz } from "@/hooks/useQuiz"
 import type { ProfileStats } from "@/back/types/socket.t"
+import {useQuizContext} from "@/app/providers/QuizProvider";
 
 const PROFILE_CONFIG: Record<string, { label: string; color: string }> = {
   proprietaire: { label: "Propriétaire", color: "#60a5fa" },
@@ -18,7 +19,7 @@ export default function ResultsPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const chartRef = useRef<Chart | null>(null)
 
-  const { globalDebrief } = useQuiz(sessionId)
+  const { globalDebrief } = useQuizContext()
 
   const stats = globalDebrief?.statsByProfile ?? []
   const totalScore = globalDebrief?.leaderboard.reduce((s, p) => s + p.score, 0) ?? 0

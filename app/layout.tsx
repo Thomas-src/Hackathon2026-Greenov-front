@@ -1,41 +1,44 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type {Metadata} from "next";
+import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
-import { WebSocketProvider } from "./providers/WebSocketProvider";
+import {WebSocketProvider} from "./providers/WebSocketProvider";
 import {GameStateProvider} from "@/app/providers/GameStateProvider";
+import {QuizProvider} from "@/app/providers/QuizProvider";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+    variable: "--font-geist-sans",
+    subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "JeuxRangetout",
-  description: "Objetif zéro émission",
+    title: "JeuxRangetout",
+    description: "Objetif zéro émission",
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
+                                       children,
+                                   }: Readonly<{
+    children: React.ReactNode;
 }>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    return (
+        <html
+            lang="en"
+            className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        >
+        <body className="min-h-full flex flex-col">
         <WebSocketProvider>
-          <GameStateProvider>
-            {children}
-          </GameStateProvider>
+            <GameStateProvider>
+                <QuizProvider>
+                    {children}
+                </QuizProvider>
+            </GameStateProvider>
         </WebSocketProvider>
-      </body>
-    </html>
-  );
+        </body>
+        </html>
+    );
 }
