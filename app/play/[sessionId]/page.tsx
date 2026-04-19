@@ -1,10 +1,10 @@
 "use client"
 
-import {useCallback, useEffect, useRef, useState} from "react"
-import {useParams, useRouter, useSearchParams} from "next/navigation"
-import {useQuiz} from "@/hooks/useQuiz"
-import type {NewEvent, Profile} from "@/back/types/socket.t"
-import {useQuizContext} from "@/app/providers/QuizProvider";
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useQuiz } from "@/hooks/useQuiz"
+import type { NewEvent, Profile } from "@/back/types/socket.t"
+import { useQuizContext } from "@/app/providers/QuizProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,14 +34,14 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 const STATE_GIF: Record<number, { folder: string; prefix: string }> = {
-    0: {folder: "houses", prefix: ""},
-    1: {folder: "snow", prefix: "snow"},
-    2: {folder: "wet", prefix: "wet"},
-    3: {folder: "fire", prefix: "fire"},
-    4: {folder: "snowWet", prefix: "snowWet"},
-    5: {folder: "wetFire", prefix: "wetFire"},
-    6: {folder: "snowFire", prefix: "snowFire"},
-    7: {folder: "snowWetFire", prefix: "snowWetFire"},
+    0: { folder: "houses", prefix: "" },
+    1: { folder: "snow", prefix: "snow" },
+    2: { folder: "wet", prefix: "wet" },
+    3: { folder: "fire", prefix: "fire" },
+    4: { folder: "snowWet", prefix: "snowWet" },
+    5: { folder: "wetFire", prefix: "wetFire" },
+    6: { folder: "snowFire", prefix: "snowFire" },
+    7: { folder: "snowWetFire", prefix: "snowWetFire" },
 }
 
 const STATE_LABEL: Record<number, string> = {
@@ -70,7 +70,7 @@ function getStateId(issues: Set<IssueType>): number {
 }
 
 function getBuildingGif(profile: Profile, stateId: number): string {
-    const {folder, prefix} = STATE_GIF[stateId]
+    const { folder, prefix } = STATE_GIF[stateId]
     const filename = prefix === ""
         ? PROFILE_TO_BASE[profile]
         : `${prefix}${PROFILE_TO_SUFFIX[profile]}`
@@ -146,7 +146,7 @@ function GlobalStyles() {
 
 // ─── Juice: screen flash ──────────────────────────────────────────────────────
 
-function FeedbackFlash({feedback}: { feedback: ReturnType<typeof useQuiz>["feedback"] }) {
+function FeedbackFlash({ feedback }: { feedback: ReturnType<typeof useQuiz>["feedback"] }) {
     const [visible, setVisible] = useState(false)
     const [good, setGood] = useState(false)
     const prevKey = useRef<string | null>(null)
@@ -168,13 +168,13 @@ function FeedbackFlash({feedback}: { feedback: ReturnType<typeof useQuiz>["feedb
             position: "fixed", inset: 0, zIndex: 100, pointerEvents: "none",
             background: good ? "rgba(74,222,128,0.15)" : "rgba(248,113,113,0.18)",
             animation: good ? "flashGreen 0.65s ease-out" : "flashRed 0.65s ease-out",
-        }}/>
+        }} />
     )
 }
 
 // ─── Juice: floating score delta ──────────────────────────────────────────────
 
-function ScorePopper({feedback}: { feedback: ReturnType<typeof useQuiz>["feedback"] }) {
+function ScorePopper({ feedback }: { feedback: ReturnType<typeof useQuiz>["feedback"] }) {
     const [items, setItems] = useState<{ id: number; delta: number; good: boolean }[]>([])
     const prevKey = useRef<string | null>(null)
     const prevScore = useRef<number>(0)
@@ -190,7 +190,7 @@ function ScorePopper({feedback}: { feedback: ReturnType<typeof useQuiz>["feedbac
         prevScore.current = feedback.newScore
 
         const id = counter.current++
-        setItems(prev => [...prev, {id, delta, good: feedback.isGoodMove}])
+        setItems(prev => [...prev, { id, delta, good: feedback.isGoodMove }])
         const t = setTimeout(() => setItems(prev => prev.filter(i => i.id !== id)), 1300)
         return () => clearTimeout(t)
     }, [feedback])
@@ -218,8 +218,8 @@ function ScorePopper({feedback}: { feedback: ReturnType<typeof useQuiz>["feedbac
 // ─── House Panel ──────────────────────────────────────────────────────────────
 
 function HousePanel({
-                        profile, playerName, score, carbon, issueStates, feedbackCorrect, feedbackNote, feedback,
-                    }: {
+    profile, playerName, score, carbon, issueStates, feedbackCorrect, feedbackNote, feedback,
+}: {
     profile: Profile
     playerName: string
     score: number
@@ -277,7 +277,7 @@ function HousePanel({
             <div className="relative flex items-center justify-center">
                 <div
                     className="absolute inset-0 rounded-full blur-3xl opacity-20 transition-all duration-1000"
-                    style={{background: stateId === 0 ? "#4ade80" : "#f87171"}}
+                    style={{ background: stateId === 0 ? "#4ade80" : "#f87171" }}
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -299,15 +299,15 @@ function HousePanel({
 
             {/* État */}
             <div className="flex flex-col items-center gap-2">
-                <p className="text-xs font-semibold" style={{color: stateId === 0 ? "#4ade80" : "#f87171"}}>
+                <p className="text-xs font-semibold" style={{ color: stateId === 0 ? "#4ade80" : "#f87171" }}>
                     {STATE_LABEL[stateId]}
                 </p>
                 <div className="flex flex-wrap gap-2 justify-center">
                     {issueStates.size === 0 && (
                         <span
                             className="text-[10px] px-2 py-1 rounded-full bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80]">
-              Aucun problème actif
-            </span>
+                            Aucun problème actif
+                        </span>
                     )}
                     {issueStates.has(1) && (
                         <span
@@ -367,11 +367,11 @@ const ACTION_STYLES = [
     },
 ]
 
-const ISSUE_BADGE: Record<number, string> = {1: "❄️ Froid", 2: "💧 Condensation", 3: "🔥 Incendie"}
+const ISSUE_BADGE: Record<number, string> = { 1: "❄️ Froid", 2: "💧 Condensation", 3: "🔥 Incendie" }
 
 function EventPanel({
-                        event, onSubmit, onClose, isMobileModal = false, lastFeedback,
-                    }: {
+    event, onSubmit, onClose, isMobileModal = false, lastFeedback,
+}: {
     event: NewEvent
     onSubmit: (actionId: string) => void
     onClose?: () => void
@@ -420,14 +420,14 @@ function EventPanel({
             <div className="flex items-start justify-between gap-3 shrink-0">
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-mono text-[#3d5c45] uppercase tracking-widest">
-              Événement {event.eventNumber}/{event.totalEvents}
-            </span>
+                        <span className="text-[10px] font-mono text-[#3d5c45] uppercase tracking-widest">
+                            Événement {event.eventNumber}/{event.totalEvents}
+                        </span>
                         {issueType && (
                             <span
                                 className="text-[10px] px-2 py-0.5 rounded-full bg-[#1e3a28] border border-[#2e5a38] text-[#5a7a62]">
-                {ISSUE_BADGE[issueType]}
-              </span>
+                                {ISSUE_BADGE[issueType]}
+                            </span>
                         )}
                     </div>
                     <h2 className="text-base sm:text-lg font-semibold text-white leading-snug">{event.title}</h2>
@@ -444,8 +444,8 @@ function EventPanel({
             </div>
 
             {/* Choices */}
-            <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
-                {shuffledActions.map((action, i) => {
+            <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-3 min-h-0">
+                {event.actions.map((action, i) => {
                     const s = ACTION_STYLES[i % ACTION_STYLES.length]
                     const isSelected = selectedId === action.id
                     const isSubmitted = submittedId === action.id
@@ -457,11 +457,12 @@ function EventPanel({
                             }}
                             disabled={isPending}
                             className={`
-                w-full text-left px-4 py-3 rounded-xl border text-sm font-medium text-[#a3b8a8]
-                transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-60
-                ${!isPending ? "hover:scale-[1.01] active:scale-[0.99]" : ""}
-                ${isSelected ? s.selected : s.normal}
-              `}
+      w-full max-w-full text-left px-4 py-3 rounded-xl border text-sm font-medium text-[#a3b8a8]
+      transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60
+      break-words
+      ${!isPending ? "hover:brightness-110 active:scale-[0.99]" : ""}
+      ${isSelected ? s.selected : s.normal}
+    `}
                             style={{
                                 animation: isSelected && !isPending
                                     ? "popIn 0.2s ease-out"
@@ -470,9 +471,9 @@ function EventPanel({
                                         : undefined,
                             }}
                         >
-              <span className="font-mono text-[10px] mr-2 opacity-50">
-                {String.fromCharCode(65 + i)}
-              </span>
+                            <span className="font-mono text-[10px] mr-2 opacity-50">
+                                {String.fromCharCode(65 + i)}
+                            </span>
                             {action.label}
                         </button>
                     )
@@ -491,9 +492,9 @@ function EventPanel({
                     <>
                         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    strokeWidth="4"/>
+                                strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor"
-                                  d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"/>
+                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
                         </svg>
                         En attente…
                     </>
@@ -503,12 +504,12 @@ function EventPanel({
     )
 }
 
-function WaitingScreen({message}: { message: string }) {
+function WaitingScreen({ message }: { message: string }) {
     return (
         <div className="flex h-full items-center justify-center rounded-2xl bg-[#0d1f14] border border-[#1e3a28]">
             <div className="text-center space-y-3">
                 <div
-                    className="w-6 h-6 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin mx-auto"/>
+                    className="w-6 h-6 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-sm font-mono text-[#5a7a62]">{message}</p>
             </div>
         </div>
@@ -526,7 +527,7 @@ export default function PlayPage() {
     const profile = (searchParams.get("profile") || "proprietaire") as Profile
     const router = useRouter();
 
-    const {currentEvent, waiting, feedback, submitAction, gameStarted} = useQuizContext()
+    const { currentEvent, waiting, feedback, submitAction, gameStarted } = useQuizContext()
 
     const [score, setScore] = useState(0)
     const [carbon, setCarbon] = useState(0)
@@ -560,7 +561,7 @@ export default function PlayPage() {
         }
     }, [feedback])
 
-    const {debrief} = useQuizContext()
+    const { debrief } = useQuizContext()
 
     useEffect(() => {
         if (debrief) {
@@ -578,7 +579,7 @@ export default function PlayPage() {
             <main className="min-h-screen bg-[#0a1a0f] text-white flex items-center justify-center">
                 <div className="text-center space-y-4">
                     <div
-                        className="w-8 h-8 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin mx-auto"/>
+                        className="w-8 h-8 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin mx-auto" />
                     <p className="text-[#4ade80] font-mono text-sm">En attente du lancement…</p>
                     <p className="text-[#2e4a35] text-xs">{playerName}</p>
                 </div>
@@ -588,9 +589,9 @@ export default function PlayPage() {
 
     return (
         <main className="min-h-screen bg-[#0a1a0f] text-white font-sans flex flex-col">
-            <GlobalStyles/>
-            <FeedbackFlash feedback={feedback}/>
-            <ScorePopper feedback={feedback}/>
+            <GlobalStyles />
+            <FeedbackFlash feedback={feedback} />
+            <ScorePopper feedback={feedback} />
 
             {/* Header */}
             <header
@@ -602,9 +603,9 @@ export default function PlayPage() {
                     <span className="font-mono text-xs text-[#2e4a35]">· {sessionId}</span>
                 </div>
                 <div className="flex items-center gap-2">
-          <span className="text-xs px-2 py-0.5 rounded-full border border-[#1e3a28] text-[#3d5c45] font-mono">
-            {playerName}
-          </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full border border-[#1e3a28] text-[#3d5c45] font-mono">
+                        {playerName}
+                    </span>
                     <span
                         className="text-xs font-bold px-2 py-0.5 rounded-full border"
                         style={{
@@ -613,8 +614,8 @@ export default function PlayPage() {
                             animation: feedback ? "popIn 0.3s ease-out" : "none",
                         }}
                     >
-            {score} pts
-          </span>
+                        {score} pts
+                    </span>
                 </div>
             </header>
 
@@ -645,7 +646,7 @@ export default function PlayPage() {
 
             {/* Modal mobile */}
             {isMobileEventOpen && (
-                <div className="fixed inset-0 z-50 lg:hidden" style={{background: "rgba(0,0,0,0.85)"}}>
+                <div className="fixed inset-0 z-50 lg:hidden" style={{ background: "rgba(0,0,0,0.85)" }}>
                     <div className="flex h-full items-end">
                         <div className="h-[92dvh] w-full rounded-t-3xl p-3 bg-[#0a1a0f]">
                             {currentEvent ? (
@@ -660,7 +661,7 @@ export default function PlayPage() {
                                     lastFeedback={feedback}
                                 />
                             ) : (
-                                <WaitingScreen message={waiting?.message ?? "En attente d'un événement…"}/>
+                                <WaitingScreen message={waiting?.message ?? "En attente d'un événement…"} />
                             )}
                         </div>
                     </div>
@@ -681,9 +682,9 @@ export default function PlayPage() {
                 </div>
                 <div className="w-1/2 p-5 overflow-y-auto">
                     {currentEvent ? (
-                        <EventPanel event={currentEvent} onSubmit={handleSubmit} lastFeedback={feedback}/>
+                        <EventPanel event={currentEvent} onSubmit={handleSubmit} lastFeedback={feedback} />
                     ) : (
-                        <WaitingScreen message={waiting?.message ?? "En attente d'un événement…"}/>
+                        <WaitingScreen message={waiting?.message ?? "En attente d'un événement…"} />
                     )}
                 </div>
             </div>
