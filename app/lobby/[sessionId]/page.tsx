@@ -5,12 +5,13 @@ import QRCode from "react-qr-code";
 import { useWebSocket } from "@/app/providers/WebSocketProvider";
 import { useQuiz } from "@/hooks/useQuiz";
 import { getBaseUrl } from "@/utils/constants";
+import {useQuizContext} from "@/app/providers/QuizProvider";
 
 export default function LobbyPage() {
     const { sessionId } = useParams<{ sessionId: string }>();
     const router = useRouter();
     const { isConnected } = useWebSocket();
-    const { startGame, playersCount } = useQuiz(sessionId);
+    const { startGame, playersCount } = useQuizContext();
 
     const joinUrl = `${getBaseUrl()}/join?game=${sessionId}`;
 

@@ -3,8 +3,8 @@
 import {useEffect, useRef, useState} from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useQuiz } from "@/hooks/useQuiz";
 import { PlayerSummary } from "@/back/types/socket.t";
+import {useQuizContext} from "@/app/providers/QuizProvider";
 
 const houseByProfile: Record<string, string> = {
     proprietaire: "/houses/house.gif",
@@ -72,7 +72,7 @@ export default function HostGamePage() {
     const router = useRouter();
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const { playersCount, players, timer, globalCarbon, forceEnd, globalDebrief } = useQuiz(params.sessionId);
+    const { playersCount, players, timer, globalCarbon, forceEnd, globalDebrief } = useQuizContext();
 
     // Redirection automatique quand le GlobalDebrief arrive
     useEffect(() => {

@@ -1,11 +1,12 @@
 "use client";
 
 import {Suspense, useEffect, useState} from "react";
-import {useRouter, useSearchParams} from "next/navigation";
+import {useParams, useRouter, useSearchParams} from "next/navigation";
 import {useWebSocket} from "@/app/providers/WebSocketProvider";
 import {useQuiz} from "@/hooks/useQuiz";
 import {BACKEND_URL} from "@/utils/constants";
 import Image from "next/image";
+import {useQuizContext} from "@/app/providers/QuizProvider";
 
 type Profile = { id: string; label: string; image: string };
 type Player = { name: string; profile: Profile; x: number; y: number; isMe: boolean };
@@ -117,8 +118,7 @@ export default function JoinPage() {
 }
 
 function JoinGate() {
-    const searchParams = useSearchParams();
-    const roomIdFromUrl = searchParams.get("game");
+    const {sessionId} = useParams<{ sessionId?: string;}>();
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
@@ -126,7 +126,7 @@ function JoinGate() {
     }, []);
 
     if (!ready) return <div>Loading...</div>;
-    return <JoinContent roomIdFromUrl={roomIdFromUrl} />;
+    return <JoinContent roomIdFromUrl={sessionId ?? null} />;
 }
 
 function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
@@ -142,7 +142,7 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
     const [players, setPlayers] = useState<Player[]>([]);
 
     const { connect, isConnected } = useWebSocket();
-    const { joinRoom, gameStarted, playersCount } = useQuiz(roomId);
+    const { joinRoom, gameStarted, playersCount } = useQuizContext();
 
     useEffect(() => {
         if (gameStarted) router.push(`/play/${roomId}`);

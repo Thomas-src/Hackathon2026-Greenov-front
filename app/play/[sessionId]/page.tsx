@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useParams, useSearchParams } from "next/navigation"
+import {useParams, useRouter, useSearchParams} from "next/navigation"
 import { useQuiz } from "@/hooks/useQuiz"
 import type { NewEvent } from "@/back/types/socket.t"
+import {useQuizContext} from "@/app/providers/QuizProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -489,8 +490,9 @@ export default function PlayPage() {
   const sessionId  = params.sessionId as string
   const playerName = searchParams.get("name")    || "Joueur"
   const profile    = (searchParams.get("profile") || "proprietaire") as BackProfile
+  const router = useRouter();
 
-  const { currentEvent, waiting, feedback, submitAction, gameStarted } = useQuiz(sessionId)
+  const { currentEvent, waiting, feedback, submitAction, gameStarted } = useQuizContext()
 
   const [score,       setScore]       = useState(0)
   const [carbon,      setCarbon]      = useState(0)
@@ -523,6 +525,14 @@ export default function PlayPage() {
       setIssueStates(prev => new Set(prev).add(issueType))
     }
   }, [feedback])
+
+  const { debrief} = useQuizContext()
+
+  useEffect(() => {
+    if (debrief) {
+      router.push(`/debrief/${sessionId}?name=${playerName}&profile=${profile}`)
+    }
+  }, [debrief])
 
   const handleSubmit = useCallback((actionId: string) => {
     lastEventRef.current = currentEvent

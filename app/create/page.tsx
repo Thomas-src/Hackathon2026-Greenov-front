@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWebSocket } from "@/app/providers/WebSocketProvider";
 import { useQuiz } from "@/hooks/useQuiz";
+import {useQuizContext} from "@/app/providers/QuizProvider";
 
 export default function CreatePage() {
     const [duration, setDuration] = useState(3);
     const [isCreating, setIsCreating] = useState(false);
     const router = useRouter();
     const { isConnected } = useWebSocket();
-    const { createRoom } = useQuiz();
+    const { createRoom } = useQuizContext();
 
     const handleCreate = async () => {
         if (duration <= 0) return;
