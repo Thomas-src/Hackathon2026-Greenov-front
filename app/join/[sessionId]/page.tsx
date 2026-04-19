@@ -158,7 +158,7 @@ export function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
             await connect();
             const profile = allProfiles.find(p => p.id === profileId);
             if (!profile) throw new Error("Profil introuvable");
-            await joinRoom(name, profile.id);
+            await joinRoom(name, profile.id, roomId);
             const SIZE = 320;
             // Fix: use players.length + 1 positions and assign the last one to the new player
             const positions = generatePositions(players.length + 1, SIZE);

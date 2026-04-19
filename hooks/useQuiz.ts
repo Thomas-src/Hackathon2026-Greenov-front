@@ -20,6 +20,7 @@ import type {
 export function useQuiz(roomId?: string) {
     const {isConnected} = useWebSocket();
     const {playersCount, setPlayersCount, players, setPlayers, village, setVillage, timer, setTimer} = useGameState();
+    const [IdRoom, setRoomId] = useState<string | null>(roomId == undefined ? null : roomId);
 
     // ─────────────────────────────
     // STATE
@@ -38,34 +39,38 @@ export function useQuiz(roomId?: string) {
     // ─────────────────────────────
 
     const createRoom = useCallback(async (durationMinutes: number): Promise<RoomCreated> => {
-        return quizSocket.createRoom(durationMinutes);
+        const c = await quizSocket.createRoom(durationMinutes);
+        setRoomId(c.roomId)
+        return c;
     }, []);
 
-    const joinRoom = useCallback(async (username: string, profile: string) => {
-        if (!roomId) return;
-        await quizSocket.joinRoom(roomId, username, profile);
-    }, [roomId]);
+    const joinRoom = useCallback(async (username: string, profile: string, targetRoomId?: string) => {
+        const room = targetRoomId ?? IdRoom;
+        if (!room) return;
+        if (!IdRoom) setRoomId(room);
+        await quizSocket.joinRoom(room, username, profile);
+    }, [IdRoom]);
 
     const startGame = useCallback(async () => {
-        if (!roomId) return;
-        await quizSocket.startGame(roomId);
-    }, [roomId]);
+        if (!IdRoom) return;
+        await quizSocket.startGame(IdRoom);
+    }, [IdRoom]);
 
     const forceEnd = useCallback(async () => {
-        if (!roomId) return;
-        await quizSocket.forceEnd(roomId);
-    }, [roomId]);
+        if (!IdRoom) return;
+        await quizSocket.forceEnd(IdRoom);
+    }, [IdRoom]);
 
     const submitAction = useCallback(async (actionId: string) => {
-        console.log("[submitAction] roomId:", roomId, "actionId:", actionId);
-        if (!roomId) return;
-        await quizSocket.submitAction(roomId, actionId);
-    }, [roomId]);
+        console.log("[submitAction] IdRoom:", IdRoom, "actionId:", actionId);
+        if (!IdRoom) return;
+        await quizSocket.submitAction(IdRoom, actionId);
+    }, [IdRoom]);
 
     const getMyDebrief = useCallback(async () => {
-        if (!roomId) return;
-        await quizSocket.getMyDebrief(roomId);
-    }, [roomId]);
+        if (!IdRoom) return;
+        await quizSocket.getMyDebrief(IdRoom);
+    }, [IdRoom]);
 
     // Timer
     useEffect(() => {
