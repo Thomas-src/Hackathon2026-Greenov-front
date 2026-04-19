@@ -231,6 +231,9 @@ export default function HostGamePage() {
     // Scores locaux par username (mis à jour via VillageUpdate)
     const [localScores, setLocalScores] = useState<Record<string, number>>({});
 
+    // Layout responsive
+    const [layout, setLayout] = useState<{ positions: { x: number; y: number }[]; size: number }>({ positions: [], size: 50 });
+
     useEffect(() => {
         if (!village) return;
         const prev = prevVillage.current;
@@ -238,34 +241,38 @@ export default function HostGamePage() {
         if (prev && `${prev.username}-${prev.playerScore}` === key) return;
         prevVillage.current = village;
 
-        // Met à jour le score local
         setLocalScores(s => ({ ...s, [village.username]: village.playerScore }));
 
-        // Cherche la position de la maison pour le popper
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const sortedUsernames = [...players].sort((a, b) => a.username.localeCompare(b.username)).map(p => p.username);
+        const sortedUsernames = [...players]
+            .sort((a, b) => a.username.localeCompare(b.username))
+            .map(p => p.username);
         const idx = sortedUsernames.indexOf(village.username);
         if (idx === -1) return;
 
-        const { positions } = generatePositions(players.length, rect.width, rect.height);
-        const pos = positions[idx];
+        if (!containerRef.current) return;
+        const containerRect = containerRef.current.getBoundingClientRect();
+
+        const pos = layout.positions[idx];
         if (!pos) return;
 
-        const id = popCounter.current++;
-        const delta = prev ? village.playerScore - (prev.playerScore ?? 0) : village.playerScore;
+        const prev2 = localScores[village.username] ?? 0;
+        const delta = village.playerScore - prev2;
 
-        setPops(p => [...p, { id, delta, good: village.isGoodMove, x: pos.x, y: pos.y }]);
+        const id = popCounter.current++;
+        setPops(p => [...p, {
+            id,
+            delta,
+            good: village.isGoodMove,
+            x: containerRect.left + pos.x,
+            y: containerRect.top  + pos.y,
+        }]);
         setTimeout(() => setPops(p => p.filter(i => i.id !== id)), 1400);
-    }, [village, players]);
+    }, [village, players, layout]);
 
     // Redirection sur GlobalDebrief
     useEffect(() => {
         if (globalDebrief) router.push(`/results/${params.sessionId}`);
     }, [globalDebrief]);
-
-    // Layout responsive
-    const [layout, setLayout] = useState<{ positions: { x: number; y: number }[]; size: number }>({ positions: [], size: 50 });
 
     useEffect(() => {
         function update() {

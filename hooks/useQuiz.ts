@@ -111,7 +111,6 @@ export function useQuiz(roomId?: string) {
             setGlobalCarbon(data.globalCarbon);
             setPlayers(data.players);
             setPlayersCount(data.players.length);
-            setPlayersCount(players.length);
 
             const totalSeconds = Math.max(0, data.endsAtUnix - Math.floor(Date.now() / 1000));
             console.log("remaining:", totalSeconds, "seconds");
