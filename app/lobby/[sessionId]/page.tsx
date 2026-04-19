@@ -13,7 +13,7 @@ export default function LobbyPage() {
     const { isConnected } = useWebSocket();
     const { startGame, playersCount } = useQuizContext();
 
-    const joinUrl = `${getBaseUrl()}/join?game=${sessionId}`;
+    const joinUrl = `${getBaseUrl()}/join/${sessionId}`;
 
     const handleStart = async () => {
         await startGame();
