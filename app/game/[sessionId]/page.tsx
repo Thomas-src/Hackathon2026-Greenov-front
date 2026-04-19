@@ -233,6 +233,16 @@ export default function HostGamePage() {
     // Layout responsive
     const [layout, setLayout] = useState<{ positions: { x: number; y: number }[]; size: number }>({ positions: [], size: 50 });
 
+    const hasEnded = useRef(false);
+
+    useEffect(() => {
+        if (!timer) return;
+        if (timer.remaining <= 0 && !hasEnded.current) {
+            hasEnded.current = true;
+            forceEnd();
+        }
+    }, [timer]);
+
     useEffect(() => {
         if (!village) return;
         const prev = prevVillage.current;
