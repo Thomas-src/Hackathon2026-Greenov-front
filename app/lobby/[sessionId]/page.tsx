@@ -44,14 +44,19 @@ export default function LobbyPage() {
 
             <div className="absolute bottom-5 right-5">
             <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-                <div className="w-full flex items-center justify-between rounded-xl px-4 py-3"
-                     style={{background: "var(--card)", border: "1px solid var(--border)"}}>
-                    <span className="text-sm" style={{color: "rgba(232,245,232,0.5)"}}>Joueurs connectés</span>
-                    <span className="text-2xl font-black" style={{color: "var(--green)"}}>{playersCount}</span>
+                <div
+                    className="w-full flex flex-col items-center justify-center gap-1 rounded-xl px-4 py-3 text-center"
+                    style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+    <span className="text-2xl font-black" style={{ color: "var(--green)" }}>
+        {playersCount}
+    </span>
+                    <span className="text-sm" style={{ color: "rgba(232,245,232,0.5)" }}>
+        Joueurs connectés
+    </span>
                 </div>
 
                 <button onClick={handleStart} disabled={playersCount === 0} className="cool-btn">
-                    {playersCount === 0 ? "En attente de joueurs..." : `Démarrer (${playersCount} joueur${playersCount > 1 ? "s" : ""})`}
+                   Démarrer
                 </button>
             </div>
 

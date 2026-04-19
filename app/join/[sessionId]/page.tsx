@@ -193,8 +193,12 @@ export function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-semibold uppercase tracking-wider"
                                        style={{color: "rgba(232,245,232,0.4)"}}>Code de session</label>
-                                <input value={roomId} onChange={e => setRoomId(e.target.value)} placeholder="Ex: ABC123"
-                                       className="cool-input"/>
+                                <input
+                                    value={roomId.toUpperCase()}
+                                    onChange={(e) => setRoomId(e.target.value.toUpperCase())}
+                                    placeholder="Ex: ABC123"
+                                    className="cool-input"
+                                />
                             </div>
                         )}
 
