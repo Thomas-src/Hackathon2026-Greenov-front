@@ -3,23 +3,22 @@
 import {useCallback, useEffect, useRef, useState} from "react"
 import {useParams, useRouter, useSearchParams} from "next/navigation"
 import {useQuiz} from "@/hooks/useQuiz"
-import type {NewEvent} from "@/back/types/socket.t"
+import type {NewEvent, Profile} from "@/back/types/socket.t"
 import {useQuizContext} from "@/app/providers/QuizProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type IssueType = 1 | 2 | 3
-type BackProfile = "proprietaire" | "locataire" | "entreprise"
 
 // ─── GIF mapping ──────────────────────────────────────────────────────────────
 
-const PROFILE_TO_BASE: Record<BackProfile, string> = {
+const PROFILE_TO_BASE: Record<Profile, string> = {
     proprietaire: "house",
     locataire: "flat",
     entreprise: "company",
 }
 
-const PROFILE_TO_SUFFIX: Record<BackProfile, string> = {
+const PROFILE_TO_SUFFIX: Record<Profile, string> = {
     proprietaire: "House",
     locataire: "Flat",
     entreprise: "Company",
@@ -61,7 +60,7 @@ function getStateId(issues: Set<IssueType>): number {
     return 7
 }
 
-function getBuildingGif(profile: BackProfile, stateId: number): string {
+function getBuildingGif(profile: Profile, stateId: number): string {
     const {folder, prefix} = STATE_GIF[stateId]
     const filename = prefix === ""
         ? PROFILE_TO_BASE[profile]
@@ -212,7 +211,7 @@ function ScorePopper({feedback}: { feedback: ReturnType<typeof useQuiz>["feedbac
 function HousePanel({
                         profile, playerName, score, carbon, issueStates, feedbackCorrect, feedbackNote, feedback,
                     }: {
-    profile: BackProfile
+    profile: Profile
     playerName: string
     score: number
     carbon: number
@@ -512,7 +511,7 @@ export default function PlayPage() {
 
     const sessionId = params.sessionId as string
     const playerName = searchParams.get("name") || "Joueur"
-    const profile = (searchParams.get("profile") || "proprietaire") as BackProfile
+    const profile = (searchParams.get("profile") || "proprietaire") as Profile
     const router = useRouter();
 
     const {currentEvent, waiting, feedback, submitAction, gameStarted} = useQuizContext()

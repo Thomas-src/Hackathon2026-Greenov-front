@@ -128,7 +128,7 @@ function JoinGate() {
     return <JoinContent roomIdFromUrl={sessionId ?? null}/>;
 }
 
-function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
+export function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
     const router = useRouter();
 
     const [roomId, setRoomId] = useState(roomIdFromUrl ?? "");
@@ -144,8 +144,8 @@ function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
     const {joinRoom, gameStarted, playersCount} = useQuizContext();
 
     useEffect(() => {
-        if (gameStarted) router.push(`/play/${roomId}`);
-    }, [gameStarted, roomId, router]);
+        if (gameStarted) router.push(`/play/${roomId}?name=${name}&profile=${profileId.toLowerCase()}`);
+    }, [gameStarted, name, profileId, roomId, router]);
 
     useEffect(() => {
         fetch(`${BACKEND_URL}/api/profiles`).then(r => r.json()).then(setAllProfiles).catch(console.error);
