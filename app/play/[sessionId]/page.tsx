@@ -620,7 +620,7 @@ export default function PlayPage() {
             </header>
 
             {/* ── Mobile (< lg) ── */}
-            <div className="flex-1 flex flex-col lg:hidden overflow-hidden">
+            <div className="flex-1 flex flex-col lg:hidden overflow-hidden justify-between">
                 <div className="flex-1 overflow-y-auto">
                     <HousePanel
                         profile={profile} playerName={playerName}
@@ -630,18 +630,20 @@ export default function PlayPage() {
                         feedbackNote={feedbackNote}
                         feedback={feedback}
                     />
-                </div>
-                <div className="p-4 shrink-0 border-t border-[#1e3a28]">
-                    <button
-                        onClick={() => setIsMobileEventOpen(true)}
-                        className="w-full py-4 rounded-xl bg-[#4ade80] text-[#0d1f14] font-bold text-sm
+                    <div className=" p-4 shrink-0 border-t border-[#1e3a28]">
+                        <button
+                            onClick={() => setIsMobileEventOpen(true)}
+                            className="w-full py-4 rounded-xl bg-[#4ade80] text-[#0d1f14] font-bold text-sm
               hover:bg-[#22c55e] active:scale-[0.98] transition-all"
-                    >
-                        {currentEvent
-                            ? `Répondre · événement ${currentEvent.eventNumber}/${currentEvent.totalEvents}`
-                            : "Répondre à l'événement"}
-                    </button>
+                        >
+                            {currentEvent
+                                ? `Répondre · événement ${currentEvent.eventNumber}/${currentEvent.totalEvents}`
+                                : "Répondre à l'événement"}
+                        </button>
+                    </div>
                 </div>
+
+
             </div>
 
             {/* Modal mobile */}
