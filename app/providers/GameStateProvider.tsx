@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type {PlayerSummary, VillageUpdate, TimerTick, Profile} from "@/back/types/socket.t";
+import React, {createContext, type ReactNode, useCallback, useContext, useState} from "react";
+import type {PlayerSummary, Profile, TimerTick, VillageUpdate} from "@/back/types/socket.t";
 
 type GameStateContextValue = {
     playersCount: number;
@@ -17,11 +17,11 @@ type GameStateContextValue = {
 
 const GameStateContext = createContext<GameStateContextValue | null>(null);
 
-export function GameStateProvider({ children }: { children: ReactNode }) {
+export function GameStateProvider({children}: { children: ReactNode }) {
     const [playersCount, setPlayersCount] = useState(0);
-    const [players, setPlayers]           = useState<PlayerSummary[]>([]);
-    const [village, setVillage]           = useState<VillageUpdate | null>(null);
-    const [timer, setTimer]               = useState<TimerTick | null>(null);
+    const [players, setPlayers] = useState<PlayerSummary[]>([]);
+    const [village, setVillage] = useState<VillageUpdate | null>(null);
+    const [timer, setTimer] = useState<TimerTick | null>(null);
 
     const updatePlayer = useCallback((v: VillageUpdate) => {
         setVillage(v);

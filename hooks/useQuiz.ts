@@ -1,37 +1,37 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { quizSocket } from "@/back/WebSocket";
-import { useWebSocket } from "@/app/providers/WebSocketProvider";
-import { useGameState } from "@/app/providers/GameStateProvider";
+import {useCallback, useEffect, useState} from "react";
+import {quizSocket} from "@/back/WebSocket";
+import {useWebSocket} from "@/app/providers/WebSocketProvider";
+import {useGameState} from "@/app/providers/GameStateProvider";
 
 import type {
-    NewEvent,
-    WaitingForOthers,
     ActionFeedback,
-    VillageUpdate,
-    PlayerDebrief,
-    GlobalDebrief,
     GameStartedHost,
+    GlobalDebrief,
+    NewEvent,
+    PlayerDebrief,
+    PlayerLeft,
     RoomCreated,
-    PlayerLeft, PlayerSummary,
+    VillageUpdate,
+    WaitingForOthers,
 } from "@/back/types/socket.t";
 
 export function useQuiz(roomId?: string) {
-    const { isConnected } = useWebSocket();
-    const { playersCount, setPlayersCount, players, setPlayers, village, setVillage, timer, setTimer } = useGameState();
+    const {isConnected} = useWebSocket();
+    const {playersCount, setPlayersCount, players, setPlayers, village, setVillage, timer, setTimer} = useGameState();
 
     // ─────────────────────────────
     // STATE
     // ─────────────────────────────
 
-    const [currentEvent, setCurrentEvent]   = useState<NewEvent | null>(null);
-    const [waiting, setWaiting]             = useState<WaitingForOthers | null>(null);
-    const [feedback, setFeedback]           = useState<ActionFeedback | null>(null);
-    const [debrief, setDebrief]             = useState<PlayerDebrief | null>(null);
+    const [currentEvent, setCurrentEvent] = useState<NewEvent | null>(null);
+    const [waiting, setWaiting] = useState<WaitingForOthers | null>(null);
+    const [feedback, setFeedback] = useState<ActionFeedback | null>(null);
+    const [debrief, setDebrief] = useState<PlayerDebrief | null>(null);
     const [globalDebrief, setGlobalDebrief] = useState<GlobalDebrief | null>(null);
-    const [gameStarted, setGameStarted]     = useState(false);
-    const [globalCarbon, setGlobalCarbon]   = useState(0);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [globalCarbon, setGlobalCarbon] = useState(0);
 
     // ─────────────────────────────
     // ACTIONS
@@ -137,7 +137,7 @@ export function useQuiz(roomId?: string) {
             setCurrentEvent(null);
         });
 
-       // quizSocket.on("TimerTick", setTimer);
+        // quizSocket.on("TimerTick", setTimer);
 
         quizSocket.on("ActionFeedback", setFeedback);
 

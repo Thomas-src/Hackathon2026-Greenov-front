@@ -1,9 +1,8 @@
 "use client";
 
 import {Suspense, useEffect, useState} from "react";
-import {useParams, useRouter, useSearchParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import {useWebSocket} from "@/app/providers/WebSocketProvider";
-import {useQuiz} from "@/hooks/useQuiz";
 import {BACKEND_URL} from "@/utils/constants";
 import Image from "next/image";
 import {useQuizContext} from "@/app/providers/QuizProvider";
@@ -23,12 +22,12 @@ function generatePositions(count: number, size: number) {
             y = random(0, size - 60);
             attempts++;
         } while (attempts < 50 && positions.some(p => Math.abs(p.x - x) < minDist && Math.abs(p.y - y) < minDist));
-        positions.push({ x, y });
+        positions.push({x, y});
     }
     return positions;
 }
 
-function House({ src }: { src: string }) {
+function House({src}: { src: string }) {
     return (
         <div className="flex items-center justify-center w-32 h-32">
             <Image
@@ -112,13 +111,13 @@ function ProfileWheel({
 export default function JoinPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <JoinGate />
+            <JoinGate/>
         </Suspense>
     );
 }
 
 function JoinGate() {
-    const {sessionId} = useParams<{ sessionId?: string;}>();
+    const {sessionId} = useParams<{ sessionId?: string; }>();
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
@@ -126,10 +125,10 @@ function JoinGate() {
     }, []);
 
     if (!ready) return <div>Loading...</div>;
-    return <JoinContent roomIdFromUrl={sessionId ?? null} />;
+    return <JoinContent roomIdFromUrl={sessionId ?? null}/>;
 }
 
-function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
+function JoinContent({roomIdFromUrl}: { roomIdFromUrl: string | null }) {
     const router = useRouter();
 
     const [roomId, setRoomId] = useState(roomIdFromUrl ?? "");
@@ -141,8 +140,8 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
     const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
 
-    const { connect, isConnected } = useWebSocket();
-    const { joinRoom, gameStarted, playersCount } = useQuizContext();
+    const {connect, isConnected} = useWebSocket();
+    const {joinRoom, gameStarted, playersCount} = useQuizContext();
 
     useEffect(() => {
         if (gameStarted) router.push(`/play/${roomId}`);
@@ -165,8 +164,8 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
             // Fix: use players.length + 1 positions and assign the last one to the new player
             const positions = generatePositions(players.length + 1, SIZE);
             setPlayers(prev => [
-                ...prev.map((p, i) => ({ ...p, x: positions[i].x, y: positions[i].y })),
-                { name, profile, x: positions[prev.length].x, y: positions[prev.length].y, isMe: true },
+                ...prev.map((p, i) => ({...p, x: positions[i].x, y: positions[i].y})),
+                {name, profile, x: positions[prev.length].x, y: positions[prev.length].y, isMe: true},
             ]);
             setJoined(true);
         } catch (err: any) {
@@ -177,34 +176,34 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center p-4" style={{ background: "var(--background)" }}>
+        <div className="flex min-h-screen items-center justify-center p-4" style={{background: "var(--background)"}}>
             <div className="flex flex-col items-center gap-6 w-full max-w-sm">
 
                 <div className="text-center">
-                    <h1 className="text-4xl font-black" style={{ color: "var(--green)" }}>Jeux'Rénov</h1>
-                    <p className="text-sm mt-1" style={{ color: "rgba(232,245,232,0.5)" }}>Le quiz sur la transition
+                    <h1 className="text-4xl font-black" style={{color: "var(--green)"}}>Jeux'Rénov</h1>
+                    <p className="text-sm mt-1" style={{color: "rgba(232,245,232,0.5)"}}>Le quiz sur la transition
                         écologique</p>
                 </div>
 
                 {!joined ? (
                     <div className="w-full flex flex-col gap-4 rounded-2xl p-6"
-                         style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+                         style={{background: "var(--card)", border: "1px solid var(--border)"}}>
                         <h2 className="text-xl font-bold text-center">Rejoindre une partie</h2>
 
                         {!roomIdFromUrl && (
                             <div className="flex flex-col gap-1">
                                 <label className="text-xs font-semibold uppercase tracking-wider"
-                                       style={{ color: "rgba(232,245,232,0.4)" }}>Code de session</label>
+                                       style={{color: "rgba(232,245,232,0.4)"}}>Code de session</label>
                                 <input value={roomId} onChange={e => setRoomId(e.target.value)} placeholder="Ex: ABC123"
-                                       className="cool-input" />
+                                       className="cool-input"/>
                             </div>
                         )}
 
                         <div className="flex flex-col gap-1">
                             <label className="text-xs font-semibold uppercase tracking-wider"
-                                   style={{ color: "rgba(232,245,232,0.4)" }}>Pseudo</label>
+                                   style={{color: "rgba(232,245,232,0.4)"}}>Pseudo</label>
                             <input value={name} onChange={e => setName(e.target.value)} placeholder="Ton nom de joueur"
-                                   className="cool-input" />
+                                   className="cool-input"/>
                         </div>
 
                         <div className="flex flex-col gap-3">
@@ -216,7 +215,7 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
                                     onSelect={setProfileId}
                                 />
                             ) : (
-                                <p className="text-sm text-center" style={{color : "rgba(232,245,232,0.5)"}}>
+                                <p className="text-sm text-center" style={{color: "rgba(232,245,232,0.5)"}}>
                                     Chargement des profils...
                                 </p>
                             )}
@@ -241,7 +240,7 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
                     <div className="w-full flex flex-col items-center gap-4">
                         <div className="text-center">
                             <p className="text-lg font-bold">En attente du début...</p>
-                            <p className="text-sm mt-1" style={{ color: "rgba(232,245,232,0.5)" }}>
+                            <p className="text-sm mt-1" style={{color: "rgba(232,245,232,0.5)"}}>
                                 {playersCount == 0 ? 1 : playersCount} joueur{playersCount > 1 ? "s" : ""} dans la salle
                             </p>
                         </div>
@@ -259,9 +258,9 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "var(--green)" }} />
+                            <span className="w-2 h-2 rounded-full animate-pulse" style={{background: "var(--green)"}}/>
                             <span className="text-sm"
-                                  style={{ color: "rgba(232,245,232,0.5)" }}>En attente de l'hôte</span>
+                                  style={{color: "rgba(232,245,232,0.5)"}}>En attente de l'hôte</span>
                         </div>
                     </div>
                 )}
@@ -269,9 +268,9 @@ function JoinContent({ roomIdFromUrl }: { roomIdFromUrl: string | null }) {
 
             <div className="fixed bottom-4 right-4 flex items-center gap-2">
                 <span className="text-xs"
-                      style={{ color: "rgba(232,245,232,0.3)" }}>{isConnected ? "Connecté" : "Déconnecté"}</span>
+                      style={{color: "rgba(232,245,232,0.3)"}}>{isConnected ? "Connecté" : "Déconnecté"}</span>
                 <div className={`w-2 h-2 rounded-full ${isConnected ? "animate-pulse" : ""}`}
-                     style={{ background: isConnected ? "var(--green)" : "var(--red)" }} />
+                     style={{background: isConnected ? "var(--green)" : "var(--red)"}}/>
             </div>
         </div>
     );

@@ -1,15 +1,7 @@
 "use client";
 
-import {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-    type ReactNode,
-} from "react";
-import { quizSocket } from "@/back/WebSocket";
+import {createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState,} from "react";
+import {quizSocket} from "@/back/WebSocket";
 
 type WebSocketContextValue = {
     isConnected: boolean;
@@ -18,7 +10,7 @@ type WebSocketContextValue = {
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null);
 
-export function WebSocketProvider({ children }: { children: ReactNode }) {
+export function WebSocketProvider({children}: { children: ReactNode }) {
     const [isConnected, setIsConnected] = useState(false);
 
     const connect = useCallback(async () => {

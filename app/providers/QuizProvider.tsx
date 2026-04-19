@@ -1,12 +1,12 @@
 "use client"
 
-import { createContext, useContext } from "react"
-import { useQuiz } from "@/hooks/useQuiz"
-import { useParams } from "next/navigation"
+import {createContext, useContext} from "react"
+import {useQuiz} from "@/hooks/useQuiz"
+import {useParams} from "next/navigation"
 
 const QuizContext = createContext<ReturnType<typeof useQuiz> | null>(null)
 
-export function QuizProvider({ children }: { children: React.ReactNode }) {
+export function QuizProvider({children}: { children: React.ReactNode }) {
     const params = useParams<{ sessionId?: string; id?: string }>()
     const roomId = params.sessionId ?? params.id
 

@@ -146,23 +146,23 @@ export interface GlobalDebrief {
 
 export interface QuizHubServerEvents {
     // Room
-    RoomCreated:       RoomCreated;
-    JoinSuccess:       JoinSuccess;
-    JoinFailed:        JoinFailed;
-    PlayerJoined:      PlayerJoined;
-    PlayerLeft:        PlayerLeft;
+    RoomCreated: RoomCreated;
+    JoinSuccess: JoinSuccess;
+    JoinFailed: JoinFailed;
+    PlayerJoined: PlayerJoined;
+    PlayerLeft: PlayerLeft;
     // Game
-    GameStartedHost:   GameStartedHost;
+    GameStartedHost: GameStartedHost;
     GameStartedPlayer: GameStartedPlayer;
-    NewEvent:          NewEvent;
-    TimerTick:         TimerTick;
-    WaitingForOthers:  WaitingForOthers;
-    VillageUpdate:     VillageUpdate;
+    NewEvent: NewEvent;
+    TimerTick: TimerTick;
+    WaitingForOthers: WaitingForOthers;
+    VillageUpdate: VillageUpdate;
     // Action
-    ActionFeedback:    ActionFeedback;
+    ActionFeedback: ActionFeedback;
     // Debrief
-    Debrief:           PlayerDebrief;
-    GlobalDebrief:     GlobalDebrief;
+    Debrief: PlayerDebrief;
+    GlobalDebrief: GlobalDebrief;
 }
 
 // Helper pour enregistrer un handler fortement typé :
