@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { PlayerSummary, VillageUpdate } from "@/back/types/socket.t";
 import { useQuizContext } from "@/app/providers/QuizProvider";
 
@@ -172,7 +171,7 @@ function House({
                 }}/>
             )}
 
-            <Image
+            <img
                 src={houseByProfile[player.profile.toLowerCase()] ?? "/houses/house.gif"}
                 alt={player.username}
                 width={size}

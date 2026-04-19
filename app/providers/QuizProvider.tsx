@@ -11,7 +11,7 @@ export function QuizProvider({children}: { children: React.ReactNode }) {
     const roomId = params.sessionId ?? params.id
 
     const quiz = useQuiz(roomId)
-
+    console.log("ALL PARAMS:", JSON.stringify(params))
     console.log("ID IS " + roomId)
 
     return <QuizContext.Provider value={quiz}>{children}</QuizContext.Provider>

@@ -4,7 +4,6 @@ import {Suspense, useEffect, useState} from "react";
 import {useParams, useRouter} from "next/navigation";
 import {useWebSocket} from "@/app/providers/WebSocketProvider";
 import {BACKEND_URL} from "@/utils/constants";
-import Image from "next/image";
 import {useQuizContext} from "@/app/providers/QuizProvider";
 
 type Profile = { id: string; label: string; image: string };
@@ -30,11 +29,11 @@ function generatePositions(count: number, size: number) {
 function House({src}: { src: string }) {
     return (
         <div className="flex items-center justify-center w-32 h-32">
-            <Image
+            <img
                 alt="Maison"
+                src={src}
                 width={128}
                 height={128}
-                src={src}
                 className="image-pixel"
             />
         </div>
