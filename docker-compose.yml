@@ -4,9 +4,6 @@ services:
     image: registry.redyd.dev/jeuxrenov-front:latest
     container_name: jeuxrenov-front
     restart: unless-stopped
-    environment:
-      - NEXT_PUBLIC_BASE_URL=https://jeuxrenov.redyd.dev
-      - NEXT_PUBLIC_BACKEND_URL=https://jeuxrenov-back.redyd.dev
     ports:
       - "8081:3000"
     networks:
