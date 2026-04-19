@@ -6,7 +6,7 @@ import { useWebSocket } from "@/app/providers/WebSocketProvider";
 import { useQuiz } from "@/hooks/useQuiz";
 
 export default function CreatePage() {
-    const [duration, setDuration] = useState(10);
+    const [duration, setDuration] = useState(3);
     const [isCreating, setIsCreating] = useState(false);
     const router = useRouter();
     const { isConnected } = useWebSocket();
