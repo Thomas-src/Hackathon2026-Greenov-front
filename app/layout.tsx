@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "JeuxRangetout",
-    description: "Objetif zéro émission",
+    title: "Jeux'Rénov",
+    description: "Objetif rénovation, le tout de manière écolo",
 };
 
 export default function RootLayout({
